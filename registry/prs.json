@@ -249,7 +249,9 @@
       "id": "UA-015",
       "title": "Immutable laboratory artifact ingestion and provenance",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        17
+      ],
       "dependsOn": [
         "UA-009",
         "UA-012"
@@ -611,6 +613,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/16",
       "mergedAt": "2026-11-15T19:24:52Z",
+      "draft": false
+    },
+    {
+      "number": 17,
+      "title": "UA-015: Immutable laboratory artifact ingestion and provenance",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/17",
+      "mergedAt": "2026-11-15T19:28:10Z",
       "draft": false
     }
   ]

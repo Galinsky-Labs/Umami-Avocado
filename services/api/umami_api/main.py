@@ -102,7 +102,7 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
         ):
             response = error_response(400)
         elif not length.isdigit() or int(length) > (
-                MAX_ARTIFACT_BYTES if path.endswith("/artifacts") else MAX_BODY_BYTES):
+                MAX_ARTIFACT_BYTES if path.endswith(("/artifacts", "/files")) else MAX_BODY_BYTES):
             response = error_response(413 if length.isdigit() else 400)
         else:
             response = await call_next(request)
