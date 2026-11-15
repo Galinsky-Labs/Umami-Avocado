@@ -13,6 +13,7 @@ from umami_api.v1 import (
     materials,
     measurements,
     projects,
+    qc,
     simulator,
     spending,
     studio,
@@ -33,3 +34,4 @@ router.include_router(materials.router)
 router.include_router(labs.router)
 router.include_router(artifacts.router)
 router.include_router(cro.router)
+router.include_router(qc.router)

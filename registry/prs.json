@@ -235,7 +235,9 @@
       "id": "UA-014",
       "title": "Supervised manual CRO and secure file-exchange workflow",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        18
+      ],
       "dependsOn": [
         "UA-013"
       ],
@@ -621,6 +623,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/17",
       "mergedAt": "2026-11-15T19:28:10Z",
+      "draft": false
+    },
+    {
+      "number": 18,
+      "title": "UA-014: Supervised manual CRO and secure file-exchange workflow",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/18",
+      "mergedAt": "2026-11-15T19:31:36Z",
       "draft": false
     }
   ]
