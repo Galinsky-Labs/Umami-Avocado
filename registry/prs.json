@@ -67,7 +67,9 @@
       "id": "UA-004",
       "title": "Evidence registry and scientific claim review",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        7
+      ],
       "dependsOn": [
         "UA-003"
       ],
@@ -521,6 +523,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/6",
       "mergedAt": "2026-11-15T18:42:50Z",
+      "draft": false
+    },
+    {
+      "number": 7,
+      "title": "UA-004: Evidence registry and scientific claim review",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/7",
+      "mergedAt": "2026-11-15T18:45:40Z",
       "draft": false
     }
   ]
