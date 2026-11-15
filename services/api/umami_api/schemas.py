@@ -785,3 +785,57 @@ class ExchangeItemOut(Output):
     note: str
     recorded_by: uuid.UUID
     created_at: datetime
+
+
+class QcRequestIn(Input):
+    assay_id: uuid.UUID
+    origin: Origin
+    run_id: uuid.UUID | None = None
+
+
+class QcDispositionIn(Input):
+    decision: Literal["accepted", "rejected"]
+    rationale: str = Field(min_length=10, max_length=4000)
+
+
+class QcDispositionOut(Output):
+    decision: str
+    rationale: str
+    decided_by: uuid.UUID
+    created_at: datetime
+
+
+class QcReportOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    run_id: uuid.UUID | None
+    assay_id: uuid.UUID
+    origin: Origin
+    status: Literal["pass", "warn", "fail"]
+    metrics: dict
+    flags: list[dict]
+    measurement_ids_sha256: str
+    generated_by: uuid.UUID
+    created_at: datetime
+    disposition: QcDispositionOut | None = None
+
+
+class RunNormalizationOut(Output):
+    run_id: uuid.UUID
+    origin: Origin
+    final_time_h: float | None
+    biomass_initial_g_l: float | None
+    biomass_final_g_l: float | None
+    substrate_initial_g_l: float | None
+    substrate_final_g_l: float | None
+    biomass_yield_g_g: float | None
+    specific_growth_rate_per_h: float | None
+
+
+class ReproducibilityOut(Output):
+    protocol_fingerprint: str
+    origin: Origin
+    runs: int
+    mean: float | None = None
+    cv: float | None
+    reproducible: bool | None

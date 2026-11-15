@@ -675,3 +675,37 @@ class ExchangeItem(TimestampMixin, Base):
     artifact_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("artifacts.id"))
     note: Mapped[str] = mapped_column(Text, default="")
     recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class QcReport(TimestampMixin, Base):
+    """Immutable QC evaluation of one assay dataset; disposition recorded separately."""
+    __tablename__ = "qc_reports"
+    __table_args__ = (CheckConstraint("status IN ('pass', 'warn', 'fail')", name="ck_qc_status"),
+                      CheckConstraint(_in("origin", RESULT_ORIGINS), name="ck_qc_origin"),
+                      Index("ix_qc_project", "project_id", "created_at"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("experiment_runs.id"))
+    assay_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("assays.id"))
+    origin: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(8))
+    metrics: Mapped[dict] = mapped_column(JSON)
+    flags: Mapped[list[dict]] = mapped_column(JSON)
+    measurement_ids_sha256: Mapped[str] = mapped_column(String(64))
+    generated_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class QcDisposition(TimestampMixin, Base):
+    __tablename__ = "qc_dispositions"
+    __table_args__ = (UniqueConstraint("report_id", name="uq_qc_disposition"),
+                      CheckConstraint("decision IN ('accepted', 'rejected')",
+                                      name="ck_qc_decision"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    report_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("qc_reports.id"))
+    decision: Mapped[str] = mapped_column(String(10))
+    rationale: Mapped[str] = mapped_column(Text)
+    decided_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
