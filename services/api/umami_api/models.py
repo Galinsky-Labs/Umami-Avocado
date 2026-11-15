@@ -411,3 +411,46 @@ class ExperimentRun(TimestampMixin, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+PROPOSAL_STATES = ("draft", "preflight_failed", "ready", "executing", "executed", "withdrawn")
+
+
+class ProtocolVersion(TimestampMixin, Base):
+    """Immutable, versioned protocol content (UA-011). A trigger rejects UPDATE/DELETE."""
+    __tablename__ = "protocol_versions"
+    __table_args__ = (UniqueConstraint("workspace_id", "key", "version", name="uq_protocol_version"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    key: Mapped[str] = mapped_column(String(64))
+    version: Mapped[int]
+    title: Mapped[str] = mapped_column(String(160))
+    content: Mapped[dict] = mapped_column(JSON)
+    change_note: Mapped[str] = mapped_column(Text, default="")
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class ExperimentProposal(TimestampMixin, Base):
+    __tablename__ = "experiment_proposals"
+    __table_args__ = (
+        CheckConstraint(_in("state", PROPOSAL_STATES), name="ck_proposal_state"),
+        CheckConstraint(_in("target_origin", RESULT_ORIGINS), name="ck_proposal_target"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    protocol_version_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("protocol_versions.id"))
+    title: Mapped[str] = mapped_column(String(160))
+    hypothesis: Mapped[str] = mapped_column(Text)
+    rationale: Mapped[str] = mapped_column(Text, default="")
+    evidence_claim_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    evidence_source_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    target_origin: Mapped[str] = mapped_column(String(16))
+    state: Mapped[str] = mapped_column(String(20), default="draft")
+    preflight: Mapped[dict | None] = mapped_column(JSON)
+    run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("experiment_runs.id"))
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    author_kind: Mapped[str] = mapped_column(String(16))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

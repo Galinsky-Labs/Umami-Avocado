@@ -10,6 +10,7 @@ from umami_api.v1 import (
     projects,
     simulator,
     spending,
+    studio,
 )
 
 router = APIRouter(prefix="/api/v1")
@@ -21,3 +22,4 @@ router.include_router(evidence.router)
 router.include_router(spending.router)
 router.include_router(jobs.router)
 router.include_router(simulator.router)
+router.include_router(studio.router)

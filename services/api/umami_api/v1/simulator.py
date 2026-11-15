@@ -24,21 +24,15 @@ from umami_api.v1.projects import get_project
 router = APIRouter(tags=["simulator"])
 
 
-@router.post("/workspaces/{workspace_id}/projects/{project_id}/simulated-runs",
-             response_model=RunOut, status_code=202, operation_id="submit_simulated_run")
-def submit(project_id: uuid.UUID, body: SimulationDesignIn, access: AccessDep,
-           idempotency_key: IdempotencyKey = None):
-    project = get_project(access, project_id)
-    authorize(access, "experiment.submit_simulated", Subject(project_id=project.id),
-              ("project", project.id))
+def create_simulated_run(access, project, design: dict, label: str,
+                         idempotency_key: str | None = None) -> ExperimentRun:
+    """Create a SIMULATED run and its durable job (caller has authorized)."""
     if idempotency_key:
         existing = access.session.scalar(select(ExperimentRun).join(
             Job, Job.id == ExperimentRun.job_id).where(
             Job.workspace_id == access.workspace.id, Job.idempotency_key == idempotency_key))
         if existing is not None:
             return existing
-    design = body.model_dump()
-    label = design.pop("label")
     run = ExperimentRun(workspace_id=access.workspace.id, project_id=project.id,
                         origin="SIMULATED", label=label, model_version=MODEL_VERSION,
                         design=design, created_by=access.principal.id)
@@ -49,6 +43,18 @@ def submit(project_id: uuid.UUID, body: SimulationDesignIn, access: AccessDep,
                      project_id=project.id, idempotency_key=idempotency_key)
     run.job_id = job.id
     return run
+
+
+@router.post("/workspaces/{workspace_id}/projects/{project_id}/simulated-runs",
+             response_model=RunOut, status_code=202, operation_id="submit_simulated_run")
+def submit(project_id: uuid.UUID, body: SimulationDesignIn, access: AccessDep,
+           idempotency_key: IdempotencyKey = None):
+    project = get_project(access, project_id)
+    authorize(access, "experiment.submit_simulated", Subject(project_id=project.id),
+              ("project", project.id))
+    design = body.model_dump()
+    label = design.pop("label")
+    return create_simulated_run(access, project, design, label, idempotency_key)
 
 
 @router.get("/workspaces/{workspace_id}/projects/{project_id}/runs", response_model=list[RunOut],
