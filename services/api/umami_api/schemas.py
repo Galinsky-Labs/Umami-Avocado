@@ -347,3 +347,73 @@ class ClaimOut(Output):
 class ClaimDetailOut(ClaimOut):
     evidence: list[EvidenceOut]
     reviews: list[ReviewOut]
+
+
+Cents = Field(gt=0, le=100_000_000)
+
+
+class BudgetIn(Input):
+    cap_cents: int = Field(ge=0, le=100_000_000)
+
+
+class BalancesOut(Output):
+    project_id: uuid.UUID
+    cap_cents: int
+    available_cents: int
+    reserved_cents: int
+    spent_cents: int
+    platform_cap_cents: int
+    currency: Literal["USD"] = "USD"
+
+
+class QuoteIn(Input):
+    project_id: uuid.UUID
+    vendor: str = Field(min_length=1, max_length=120)
+    description: str = Field(min_length=1, max_length=4000)
+    amount_cents: int = Cents
+    origin: Origin
+    valid_until: datetime | None = None
+
+
+class QuoteOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    vendor: str
+    description: str
+    amount_cents: int
+    currency: str
+    origin: Origin
+    valid_until: datetime | None
+    recorded_by: uuid.UUID
+    created_at: datetime
+
+
+class ReservationIn(Input):
+    project_id: uuid.UUID
+    amount_cents: int = Cents
+    purpose: str = Field(min_length=5, max_length=2000)
+    quote_id: uuid.UUID | None = None
+
+
+class ReservationOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    quote_id: uuid.UUID | None
+    amount_cents: int
+    purpose: str
+    status: Literal["requested", "approved", "rejected", "released", "consumed"]
+    requested_by: uuid.UUID
+    decided_by: uuid.UUID | None
+    decided_at: datetime | None
+    created_at: datetime
+
+
+class LedgerEntryOut(Output):
+    id: uuid.UUID
+    posting_id: uuid.UUID
+    account: str
+    amount_cents: int
+    reservation_id: uuid.UUID | None
+    memo: str
+    posted_by: uuid.UUID
+    posted_at: datetime
