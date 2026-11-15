@@ -11,6 +11,7 @@ from fastapi import Depends, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from umami_api.config import Settings
 from umami_api.db import Database, utcnow
 from umami_api.errors import ApiError, not_found
 from umami_api.models import ApiToken, Membership, Principal, Workspace
@@ -57,6 +58,8 @@ def get_session(database: Annotated[Database, Depends(get_database)]):
 class Caller:
     principal: Principal
     session: Session
+    database: Database
+    settings: Settings
 
     @property
     def is_agent(self) -> bool:
@@ -79,7 +82,8 @@ def get_caller(request: Request, session: Annotated[Session, Depends(get_session
         raise ApiError(401, "unauthorized", "A valid bearer token is required.")
     if token.last_used_at is None or (now - token.last_used_at) > timedelta(minutes=5):
         token.last_used_at = now
-    return Caller(principal=principal, session=session)
+    return Caller(principal=principal, session=session, database=request.app.state.database,
+                  settings=request.app.state.settings)
 
 
 @dataclass

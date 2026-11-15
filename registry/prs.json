@@ -51,7 +51,9 @@
       "id": "UA-003",
       "title": "Database, migrations, workspace scoping and core identities",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        4
+      ],
       "dependsOn": [
         "UA-002"
       ],
@@ -491,6 +493,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/3",
       "mergedAt": "2026-11-15T18:26:50Z",
+      "draft": false
+    },
+    {
+      "number": 4,
+      "title": "UA-003: Database, migrations, workspace scoping and core identities",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/4",
+      "mergedAt": "2026-11-15T18:36:05Z",
       "draft": false
     }
   ]

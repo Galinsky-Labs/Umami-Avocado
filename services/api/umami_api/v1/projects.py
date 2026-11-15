@@ -4,15 +4,15 @@ import uuid
 from fastapi import APIRouter
 from sqlalchemy import select
 
+from umami_api.authz import authorize
 from umami_api.db import utcnow
 from umami_api.errors import conflict, not_found
 from umami_api.models import Project
+from umami_api.policy import Subject
 from umami_api.schemas import ProjectIn, ProjectOut, ProjectPatch
 from umami_api.security import AccessDep, WorkspaceAccess
-from umami_api.v1.identity import require_role
 
 router = APIRouter(tags=["projects"])
-WRITER_ROLES = ("owner", "admin", "scientist")
 
 
 def get_project(access: WorkspaceAccess, project_id: uuid.UUID) -> Project:
@@ -37,7 +37,7 @@ def list_projects(access: AccessDep):
 @router.post("/workspaces/{workspace_id}/projects", response_model=ProjectOut, status_code=201,
              operation_id="create_project")
 def create_project(body: ProjectIn, access: AccessDep):
-    require_role(access, WRITER_ROLES)
+    authorize(access, "project.create")
     exists = access.session.scalar(select(Project.id).where(
         Project.workspace_id == access.workspace.id, Project.slug == body.slug))
     if exists:
@@ -59,8 +59,8 @@ def read_project(project_id: uuid.UUID, access: AccessDep):
               operation_id="update_project")
 def update_project(project_id: uuid.UUID, body: ProjectPatch,
                    access: AccessDep):
-    require_role(access, WRITER_ROLES)
     project = get_project(access, project_id)
+    authorize(access, "project.update", Subject(project_id=project.id), ("project", project.id))
     for key, value in body.model_dump(exclude_unset=True).items():
         if value is not None:
             setattr(project, key, value)
