@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResearchApi, ResearchApiError, chartPaths, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
+import { ResearchApi, ResearchApiError, chartPaths, contractActive, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
 
 function respond(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -81,5 +81,15 @@ describe("chart geometry", () => {
       points: [{ time_h: 0, mean: 0, sd: null, n_biological: 3 }, { time_h: 10, mean: 5, sd: 0, n_biological: 3 }] }], 100, 100, 10);
     expect(geometry.paths[0]).toBe("10.0,90.0 90.0,10.0");
     expect(chartPaths([], 100, 100).paths).toEqual([]);
+  });
+});
+
+describe("research contracts", () => {
+  it("treats revoked or expired contracts as inactive", () => {
+    const base = { id: "c", agent_id: "a", granted_by: "o", purpose: "p", actions: [], project_ids: null, created_at: "" };
+    const now = new Date("2026-01-01T00:00:00Z");
+    expect(contractActive({ ...base, expires_at: "2026-02-01T00:00:00Z", revoked_at: null }, now)).toBe(true);
+    expect(contractActive({ ...base, expires_at: "2025-12-01T00:00:00Z", revoked_at: null }, now)).toBe(false);
+    expect(contractActive({ ...base, expires_at: "2026-02-01T00:00:00Z", revoked_at: "2025-12-31T00:00:00Z" }, now)).toBe(false);
   });
 });

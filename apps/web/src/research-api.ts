@@ -41,6 +41,18 @@ export interface ExceptionItem { kind: string; severity: "warning" | "error"; ti
 export interface SeriesPoint { time_h: number; mean: number; sd: number | null; n_biological: number }
 export interface RunSeries { run_id: string; label: string; origin: Origin; unit: string; points: SeriesPoint[] }
 
+export interface Member { principal: Principal; role: Role }
+export interface ResearchContract {
+  id: string; agent_id: string; granted_by: string; purpose: string; actions: string[]; project_ids: string[] | null;
+  expires_at: string; revoked_at: string | null; created_at: string;
+}
+export interface FullTrace extends AgentTrace { project_id: string; input_sha256: string; input: Record<string, unknown>; requested_by: string }
+export interface OptimizationRound {
+  id: string; objective: string; origin: Origin; strategy: string; created_at: string; queued_run_ids: string[];
+  suggestions: { x: Record<string, number>; predicted_mean: number | null; predicted_sd: number | null }[];
+  observations: { x: Record<string, number>; y: number }[];
+}
+
 export class ResearchApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
@@ -112,6 +124,9 @@ export class ResearchApi {
     if (!response.ok) throw new ResearchApiError(response.status, "download_failed", "The export could not be downloaded.");
     return { blob: await response.blob(), sha256: response.headers.get("X-Content-SHA256") };
   }
+  delete<T>(path: string) { return this.request<T>("DELETE", path); }
+  put<T>(path: string, body: unknown) { return this.request<T>("PUT", path, body); }
+  patch<T>(path: string, body: unknown) { return this.request<T>("PATCH", path, body); }
   get<T>(path: string) { return this.request<T>("GET", path); }
   post<T>(path: string, body?: unknown) { return this.request<T>("POST", path, body); }
   timeline(workspace: string, project: string, run: string) {
@@ -162,4 +177,11 @@ export function chartPaths(series: RunSeries[], width: number, height: number, p
   const x = (t: number) => pad + (t / maxT) * (width - 2 * pad);
   const y = (v: number) => height - pad - (v / maxY) * (height - 2 * pad);
   return { paths: series.map(s => s.points.map(p => `${x(p.time_h).toFixed(1)},${y(p.mean).toFixed(1)}`).join(" ")), maxT, maxY };
+}
+
+export const AGENT_ACTIONS = ["evidence.add", "claim.propose", "measurement.record_simulated", "experiment.draft",
+  "experiment.submit_simulated", "quote.record", "agent.run", "material.register"] as const;
+
+export function contractActive(contract: ResearchContract, now = new Date()): boolean {
+  return !contract.revoked_at && new Date(contract.expires_at) > now;
 }

@@ -139,3 +139,13 @@ def traces(project_id: uuid.UUID, access: AccessDep):
     project = get_project(access, project_id)
     return access.session.scalars(select(AgentTrace).where(AgentTrace.project_id == project.id)
                                   .order_by(AgentTrace.created_at.desc()).limit(100)).all()
+
+
+@router.get("/workspaces/{workspace_id}/agent/traces", response_model=list[AgentTraceOut],
+            operation_id="list_workspace_agent_traces")
+def workspace_traces(access: AccessDep, outcome: str | None = None):
+    """All planning traces in the workspace, newest first (review queue for UA-021)."""
+    query = select(AgentTrace).where(AgentTrace.workspace_id == access.workspace.id)
+    if outcome:
+        query = query.where(AgentTrace.outcome == outcome)
+    return access.session.scalars(query.order_by(AgentTrace.created_at.desc()).limit(200)).all()

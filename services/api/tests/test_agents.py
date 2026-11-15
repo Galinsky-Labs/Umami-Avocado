@@ -139,3 +139,11 @@ def test_agents_without_contract_cannot_plan(client, lab, make_member):
     stranger, _ = make_member("agent", kind="agent")
     url = f"{lab['base']}/projects/{lab['project']}/agent/plan"
     assert client.post(url, headers=stranger).status_code == 403
+
+
+def test_workspace_trace_queue_filters_by_outcome(client, lab, monkeypatch):
+    monkeypatch.setattr(agents_router, "PROVIDER_FACTORY", SimulatedPlanner)
+    client.post(f"{lab['base']}/projects/{lab['project']}/agent/plan", headers=lab["owner"])
+    url = f"{lab['base']}/agent/traces"
+    assert len(client.get(url, headers=lab["owner"]).json()) == 1
+    assert client.get(url, headers=lab["owner"], params={"outcome": "proposal_created"}).json() == []
