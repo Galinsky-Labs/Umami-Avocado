@@ -183,7 +183,9 @@
       "id": "UA-011",
       "title": "Experiment studio, proposals, protocol versions and preflight",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        12
+      ],
       "dependsOn": [
         "UA-004",
         "UA-005",
@@ -571,6 +573,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/11",
       "mergedAt": "2026-11-15T18:59:10Z",
+      "draft": false
+    },
+    {
+      "number": 12,
+      "title": "UA-011: Experiment studio, proposals, protocol versions and preflight",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/12",
+      "mergedAt": "2026-11-15T19:02:23Z",
       "draft": false
     }
   ]
