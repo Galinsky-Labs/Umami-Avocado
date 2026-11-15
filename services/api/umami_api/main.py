@@ -1,10 +1,12 @@
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException
 
 from umami_api.config import Settings, load_settings
@@ -23,6 +25,23 @@ from umami_api.errors import ApiError
 from umami_api.v1 import router as v1_router
 
 FOUNDATION_PATHS = ("/api/health", "/api/readiness")
+WEB_CSP = ("default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+           "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'")
+DEFAULT_WEB_DIST = Path(__file__).resolve().parents[3] / "apps" / "web" / "dist"
+
+
+def web_response(dist: Path | None, path: str) -> FileResponse | None:
+    """Serve the built single-page console for non-API paths (one-service deployment)."""
+    if dist is None or path.startswith("/api/") or path == "/api":
+        return None
+    root = dist.resolve()
+    candidate = (root / path.lstrip("/")).resolve()
+    if candidate.is_relative_to(root) and candidate.is_file():
+        return FileResponse(candidate)
+    if path.startswith("/assets/") or "." in path.rsplit("/", 1)[-1]:
+        return None
+    index = root / "index.html"
+    return FileResponse(index) if index.is_file() else None
 MAX_BODY_BYTES = 256 * 1024
 
 
@@ -62,6 +81,9 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
     )
     application.state.settings = settings
     application.state.database = database
+    configured_dist = os.getenv("WEB_DIST_DIR")
+    dist = Path(configured_dist) if configured_dist else DEFAULT_WEB_DIST
+    application.state.web_dist = dist if (dist / "index.html").is_file() else None
 
     @application.middleware("http")
     async def contract_boundary(request: Request, call_next):
@@ -77,8 +99,15 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
             response = error_response(413 if length.isdigit() else 400)
         else:
             response = await call_next(request)
-        response.headers["Cache-Control"] = "no-store"
+        if path.startswith("/assets/") and response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        else:
+            response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
+        if not path.startswith("/api/"):
+            response.headers["Content-Security-Policy"] = WEB_CSP
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Referrer-Policy"] = "no-referrer"
         return response
 
     if settings.cors_origins:
@@ -95,7 +124,11 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
         return error_response(exc.status, code=exc.code, message=exc.message)
 
     @application.exception_handler(HTTPException)
-    async def http_error(_request: Request, exc: HTTPException):
+    async def http_error(request: Request, exc: HTTPException):
+        if exc.status_code == 404 and request.method in ("GET", "HEAD"):
+            web = web_response(application.state.web_dist, request.url.path)
+            if web is not None:
+                return web
         headers = {"Allow": exc.headers["Allow"]} if exc.headers and "Allow" in exc.headers else None
         return error_response(exc.status_code, headers)
 

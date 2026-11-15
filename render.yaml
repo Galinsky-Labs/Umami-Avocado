@@ -1,4 +1,5 @@
-# Render blueprint (documentation of the deployed free-tier services).
+# Render blueprint (documentation of the deployed free-tier service).
+# One service: the FastAPI API also serves the built research console (apps/web/dist) at /.
 # Secrets are never committed: values marked sync:false are set in the Render dashboard.
 services:
   - type: web
@@ -8,7 +9,10 @@ services:
     region: ohio
     branch: main
     healthCheckPath: /api/health
-    buildCommand: pip install -r services/api/requirements.txt
+    buildCommand: >-
+      pip install -r services/api/requirements.txt &&
+      npx --yes pnpm@9.15.9 install --frozen-lockfile &&
+      npx --yes pnpm@9.15.9 --filter @umami/web build
     startCommand: >-
       PYTHONPATH=services/api python -m umami_api.migrate &&
       uvicorn umami_api.main:app --app-dir services/api --host 0.0.0.0 --port $PORT
@@ -27,18 +31,3 @@ services:
         sync: false
       - key: UMAMI_BOOTSTRAP_TOKEN   # one-time first-owner bootstrap secret (>=32 chars)
         sync: false
-      - key: CORS_ALLOW_ORIGINS      # e.g. https://umami-avocado.onrender.com
-        sync: false
-  - type: web
-    name: umami-avocado
-    runtime: static
-    branch: main
-    buildCommand: npm i -g pnpm && pnpm install && pnpm --filter @umami/web build
-    staticPublishPath: apps/web/dist
-    envVars:
-      - key: VITE_API_BASE_URL       # public URL of umami-avocado-api
-        sync: false
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
