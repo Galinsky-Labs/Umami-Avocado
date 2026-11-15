@@ -417,3 +417,35 @@ class LedgerEntryOut(Output):
     memo: str
     posted_by: uuid.UUID
     posted_at: datetime
+
+
+class JobIn(Input):
+    kind: Literal["diagnostic.echo"]
+    payload: dict = Field(default_factory=dict)
+    project_id: uuid.UUID | None = None
+    max_attempts: int = Field(default=3, ge=1, le=10)
+
+
+class JobOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID | None
+    kind: str
+    state: Literal["queued", "running", "succeeded", "failed", "dead", "cancelled"]
+    payload: dict
+    result: dict | None
+    attempts: int
+    max_attempts: int
+    run_after: datetime
+    last_error: str | None
+    idempotency_key: str | None
+    created_by: uuid.UUID
+    created_at: datetime
+    finished_at: datetime | None
+
+
+class OutboxEventOut(Output):
+    id: uuid.UUID
+    topic: str
+    payload: dict
+    created_at: datetime
+    published_at: datetime | None
