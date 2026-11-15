@@ -9,6 +9,7 @@ def tick(database=None) -> str:
     """One iteration. Without a configured database the worker is inert."""
     if database is None:
         return "idle"
+    from umami_api import simulation  # noqa: F401 - registers reviewed job handlers
     from umami_api.orchestration import dispatch_outbox, run_one
     state = run_one(database)
     dispatch_outbox(database)
