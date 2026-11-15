@@ -306,7 +306,9 @@
       "id": "UA-019",
       "title": "Evidence-linked research agents and constrained planning",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        13
+      ],
       "dependsOn": [
         "UA-004",
         "UA-011"
@@ -581,6 +583,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/12",
       "mergedAt": "2026-11-15T19:02:23Z",
+      "draft": false
+    },
+    {
+      "number": 13,
+      "title": "UA-019: Evidence-linked research agents and constrained planning",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/13",
+      "mergedAt": "2026-11-15T19:06:15Z",
       "draft": false
     }
   ]
