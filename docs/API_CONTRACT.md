@@ -48,11 +48,11 @@ replace unsupported features with `any` or silently omit authorization.
 | Method/path | Meaning | Success |
 | --- | --- | --- |
 | GET `/api/health` | Process liveness and public environment label | `HealthResponse` |
-| GET `/api/readiness` | `foundation-only` (no DB configured), `ready` (DB reachable) or `degraded`; artifact storage unavailable | `ReadinessResponse` |
+| GET `/api/readiness` | `foundation-only` (no DB configured), `ready` (DB reachable) or `degraded`; artifact storage reported with the database | `ReadinessResponse` |
 
 Both responses require `schema_version: "1.0"` and
 `live_lab_orders_enabled: false`. Readiness reports a strict boolean
-`database_connected` (UA-003) and still requires `artifact_store_connected: false`. These flags
+`database_connected` (UA-003) and `artifact_store_connected` (UA-015, PostgreSQL-backed by default). These flags
 cannot be activated by environment strings, extra properties, integer zero,
 truthy values or an AI-generated label. Models reject coercion and unknown fields
 and are frozen after validation. The environment is a bounded public deployment

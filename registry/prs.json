@@ -218,7 +218,9 @@
       "id": "UA-013",
       "title": "Laboratory adapter SDK and capability/contract registry",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        16
+      ],
       "dependsOn": [
         "UA-007",
         "UA-009"
@@ -601,6 +603,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/15",
       "mergedAt": "2026-11-15T19:20:59Z",
+      "draft": false
+    },
+    {
+      "number": 16,
+      "title": "UA-013: Laboratory adapter SDK and capability/contract registry",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/16",
+      "mergedAt": "2026-11-15T19:24:52Z",
       "draft": false
     }
   ]
