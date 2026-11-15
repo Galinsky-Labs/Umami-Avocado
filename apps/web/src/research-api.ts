@@ -35,6 +35,9 @@ export interface AgentTrace {
   errors: string[]; proposal_id: string | null; output: { title: string; rationale: string } | null; created_at: string;
 }
 
+export interface TimelineEvent { at: string; kind: string; title: string; detail: string; severity: "info" | "warning" | "error"; ref: string | null }
+export interface ExceptionItem { kind: string; severity: "warning" | "error"; title: string; detail: string; project_id: string | null; ref: string; at: string }
+
 export class ResearchApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
@@ -97,6 +100,12 @@ export class ResearchApi {
   executeProposal(workspace: string, project: string, proposal: string) {
     return this.request<unknown>("POST", `/api/v1/workspaces/${workspace}/projects/${project}/proposals/${proposal}/execute`);
   }
+  get<T>(path: string) { return this.request<T>("GET", path); }
+  post<T>(path: string, body?: unknown) { return this.request<T>("POST", path, body); }
+  timeline(workspace: string, project: string, run: string) {
+    return this.request<{ run: Run; events: TimelineEvent[] }>("GET", `/api/v1/workspaces/${workspace}/projects/${project}/runs/${run}/timeline`);
+  }
+  exceptions(workspace: string) { return this.request<ExceptionItem[]>("GET", `/api/v1/workspaces/${workspace}/exceptions`); }
   decisions(workspace: string) { return this.request<PolicyDecision[]>("GET", `/api/v1/workspaces/${workspace}/policy/decisions`); }
 }
 
