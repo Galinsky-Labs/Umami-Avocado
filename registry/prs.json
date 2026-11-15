@@ -268,7 +268,9 @@
       "id": "UA-016",
       "title": "Scientific normalization, reproducibility and quality control",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        19
+      ],
       "dependsOn": [
         "UA-005",
         "UA-015"
@@ -631,6 +633,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/18",
       "mergedAt": "2026-11-15T19:31:36Z",
+      "draft": false
+    },
+    {
+      "number": 19,
+      "title": "UA-016: Scientific normalization, reproducibility and quality control",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/19",
+      "mergedAt": "2026-11-15T23:58:12Z",
       "draft": false
     }
   ]
