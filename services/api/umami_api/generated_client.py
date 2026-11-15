@@ -1,6 +1,6 @@
 """Generated from canonical OpenAPI. No credentials, retries or lab dispatch.
 
-Contract SHA-256: 74c19a24be681ff8c1230eb058e07fa5f9d52365247ffc5fe18f22bec3b32302
+Contract SHA-256: 583126947080bac309660e5e529b73b1f6661736326ccd7c9603d5b3288457c7
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from urllib.parse import urlsplit
 
 
 class ErrorDetail(TypedDict):
-    code: Literal['invalid_request', 'not_found', 'method_not_allowed', 'internal_error']
+    code: Literal['invalid_request', 'unauthorized', 'forbidden', 'not_found', 'method_not_allowed', 'conflict', 'payload_too_large', 'policy_denied', 'limit_exceeded', 'internal_error', 'unavailable']
     message: str
 
 class ErrorEnvelope(TypedDict):
@@ -29,15 +29,15 @@ class HealthResponse(TypedDict):
 
 class ReadinessResponse(TypedDict):
     artifact_store_connected: Literal[False]
-    database_connected: Literal[False]
+    database_connected: bool
     live_lab_orders_enabled: Literal[False]
     schema_version: Literal['1.0']
-    status: Literal['foundation-only']
+    status: Literal['foundation-only', 'ready', 'degraded']
 
 ResultOrigin = Literal['SIMULATED', 'PHYSICAL']
 
-CONTRACT_DIGEST = "74c19a24be681ff8c1230eb058e07fa5f9d52365247ffc5fe18f22bec3b32302"
-SCHEMAS = json.loads('{"ErrorDetail":{"additionalProperties":false,"properties":{"code":{"enum":["invalid_request","not_found","method_not_allowed","internal_error"],"title":"Code","type":"string"},"message":{"maxLength":200,"minLength":1,"title":"Message","type":"string"}},"required":["code","message"],"title":"ErrorDetail","type":"object"},"ErrorEnvelope":{"additionalProperties":false,"properties":{"error":{"$ref":"#/components/schemas/ErrorDetail"},"schema_version":{"const":"1.0","title":"Schema Version","type":"string"}},"required":["schema_version","error"],"title":"ErrorEnvelope","type":"object"},"HealthResponse":{"additionalProperties":false,"properties":{"environment":{"maxLength":64,"minLength":1,"pattern":"^[a-z][a-z0-9_-]*$","title":"Environment","type":"string"},"live_lab_orders_enabled":{"const":false,"title":"Live Lab Orders Enabled","type":"boolean"},"schema_version":{"const":"1.0","title":"Schema Version","type":"string"},"status":{"const":"ok","title":"Status","type":"string"}},"required":["schema_version","live_lab_orders_enabled","status","environment"],"title":"HealthResponse","type":"object"},"ReadinessResponse":{"additionalProperties":false,"properties":{"artifact_store_connected":{"const":false,"title":"Artifact Store Connected","type":"boolean"},"database_connected":{"const":false,"title":"Database Connected","type":"boolean"},"live_lab_orders_enabled":{"const":false,"title":"Live Lab Orders Enabled","type":"boolean"},"schema_version":{"const":"1.0","title":"Schema Version","type":"string"},"status":{"const":"foundation-only","title":"Status","type":"string"}},"required":["schema_version","live_lab_orders_enabled","status","database_connected","artifact_store_connected"],"title":"ReadinessResponse","type":"object"},"ResultOrigin":{"description":"Provenance only. Neither value grants physical authorization.","enum":["SIMULATED","PHYSICAL"],"title":"ResultOrigin","type":"string"}}')
+CONTRACT_DIGEST = "583126947080bac309660e5e529b73b1f6661736326ccd7c9603d5b3288457c7"
+SCHEMAS = json.loads('{"ErrorDetail":{"additionalProperties":false,"properties":{"code":{"enum":["invalid_request","unauthorized","forbidden","not_found","method_not_allowed","conflict","payload_too_large","policy_denied","limit_exceeded","internal_error","unavailable"],"title":"Code","type":"string"},"message":{"maxLength":200,"minLength":1,"title":"Message","type":"string"}},"required":["code","message"],"title":"ErrorDetail","type":"object"},"ErrorEnvelope":{"additionalProperties":false,"properties":{"error":{"$ref":"#/components/schemas/ErrorDetail"},"schema_version":{"const":"1.0","title":"Schema Version","type":"string"}},"required":["schema_version","error"],"title":"ErrorEnvelope","type":"object"},"HealthResponse":{"additionalProperties":false,"properties":{"environment":{"maxLength":64,"minLength":1,"pattern":"^[a-z][a-z0-9_-]*$","title":"Environment","type":"string"},"live_lab_orders_enabled":{"const":false,"title":"Live Lab Orders Enabled","type":"boolean"},"schema_version":{"const":"1.0","title":"Schema Version","type":"string"},"status":{"const":"ok","title":"Status","type":"string"}},"required":["schema_version","live_lab_orders_enabled","status","environment"],"title":"HealthResponse","type":"object"},"ReadinessResponse":{"additionalProperties":false,"description":"foundation-only: no database configured; ready: database reachable and migrated;\\ndegraded: a database is configured but unreachable. Artifact storage is UA-015.","properties":{"artifact_store_connected":{"const":false,"title":"Artifact Store Connected","type":"boolean"},"database_connected":{"title":"Database Connected","type":"boolean"},"live_lab_orders_enabled":{"const":false,"title":"Live Lab Orders Enabled","type":"boolean"},"schema_version":{"const":"1.0","title":"Schema Version","type":"string"},"status":{"enum":["foundation-only","ready","degraded"],"title":"Status","type":"string"}},"required":["schema_version","live_lab_orders_enabled","status","database_connected","artifact_store_connected"],"title":"ReadinessResponse","type":"object"},"ResultOrigin":{"description":"Provenance only. Neither value grants physical authorization.","enum":["SIMULATED","PHYSICAL"],"title":"ResultOrigin","type":"string"}}')
 OPERATIONS = json.loads('{"get_health":{"errors":{"400":{"code":"invalid_request","schema":"ErrorEnvelope"},"404":{"code":"not_found","schema":"ErrorEnvelope"},"405":{"code":"method_not_allowed","schema":"ErrorEnvelope"},"500":{"code":"internal_error","schema":"ErrorEnvelope"}},"path":"/api/health","response":"HealthResponse"},"get_readiness":{"errors":{"400":{"code":"invalid_request","schema":"ErrorEnvelope"},"404":{"code":"not_found","schema":"ErrorEnvelope"},"405":{"code":"method_not_allowed","schema":"ErrorEnvelope"},"500":{"code":"internal_error","schema":"ErrorEnvelope"}},"path":"/api/readiness","response":"ReadinessResponse"}}')
 MAX_RESPONSE_BYTES = 65536
 

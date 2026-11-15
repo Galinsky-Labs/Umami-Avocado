@@ -30,6 +30,19 @@ jobs:
       - run: pnpm -r build
   python:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: umami_test
+          POSTGRES_USER: umami
+          POSTGRES_PASSWORD: umami_ci_only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U umami -d umami_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://umami:umami_ci_only@localhost:5432/umami_test
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -38,7 +51,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: services/api/uv.lock
       - run: uv sync --frozen --project services/api
-      - run: uv run --frozen --project services/api pytest services/api/tests services/worker/tests
+      - run: uv run --frozen --project services/api pytest services/api/tests services/worker/tests -rs
       - run: uv run --frozen --project services/api ruff check services
   compose:
     runs-on: ubuntu-latest

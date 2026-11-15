@@ -24,7 +24,7 @@ PYTHONPATH=services/worker uv run --project services/api python -m umami_worker.
 # docker compose -f infra/compose/docker-compose.yml up -d
 ```
 
-The PostgreSQL/MinIO services are provisioned by Compose but are **not yet wired into the application** (database integration: UA-003; artifact storage: UA-015). Never use these development credentials outside a local machine.
+PostgreSQL is wired into the API (UA-003, see [docs/DATABASE.md](docs/DATABASE.md)): set `DATABASE_URL`, run `PYTHONPATH=services/api uv run --project services/api python -m umami_api.migrate`, and set `UMAMI_BOOTSTRAP_TOKEN` to create the first owner via `POST /api/v1/bootstrap`. MinIO artifact storage is not yet wired (UA-015). Never use these development credentials outside a local machine.
 
 ## Quality gates
 
@@ -34,7 +34,8 @@ corepack pnpm -r typecheck
 corepack pnpm -r test
 corepack pnpm -r lint
 corepack pnpm -r build
-uv run --project services/api pytest services/api/tests services/worker/tests
+TEST_DATABASE_URL=postgresql://umami:umami_local_only@localhost:5432/umami \
+  uv run --project services/api pytest services/api/tests services/worker/tests
 uv run --project services/api ruff check services
 ```
 

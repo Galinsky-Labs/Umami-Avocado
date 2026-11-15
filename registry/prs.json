@@ -4,7 +4,7 @@
   "roadmapVersion": 1,
   "planVerified": true,
   "plannedPrCount": 30,
-  "observedAt": "2026-10-22T17:32:00Z",
+  "observedAt": "2026-11-15T18:40:00Z",
   "units": [
     {
       "id": "UA-001",
@@ -35,7 +35,9 @@
       "id": "UA-002",
       "title": "Canonical API contracts and generated clients",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        3
+      ],
       "dependsOn": [
         "UA-001"
       ],
@@ -481,6 +483,14 @@
       "updatedAt": "2026-10-22T17:29:04Z",
       "mergedAt": "2026-10-22T17:29:04Z",
       "closedAt": "2026-10-22T17:29:04Z",
+      "draft": false
+    },
+    {
+      "number": 3,
+      "title": "UA-002: Canonical API contracts and generated clients",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/3",
+      "mergedAt": "2026-11-15T18:26:50Z",
       "draft": false
     }
   ]

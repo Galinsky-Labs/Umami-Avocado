@@ -38,7 +38,9 @@ describe("generated API client", () => {
     expect(validateResponse("ResultOrigin", "simulated")).toBe(false);
     expect(validateResponse("UnknownFutureModel", {})).toBe(false);
     expect(validateResponse("constructor", {})).toBe(false);
-    expect(validateResponse("ReadinessResponse", {...examples.readiness, database_connected: true})).toBe(false);
+    expect(validateResponse("ReadinessResponse", {...examples.readiness, artifact_store_connected: true})).toBe(false);
+    expect(validateResponse("ReadinessResponse", {...examples.readiness, database_connected: "true"})).toBe(false);
+    expect(validateResponse("ReadinessResponse", {...examples.readiness, status: "ready", database_connected: true})).toBe(true);
   });
 
   it("returns typed API errors without including the provider message in Error text", async () => {
