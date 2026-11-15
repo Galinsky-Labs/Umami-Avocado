@@ -127,3 +127,47 @@ class ProjectOut(Output):
     created_by: uuid.UUID
     created_at: datetime
     updated_at: datetime
+
+
+AgentAction = Literal["evidence.add", "claim.propose", "measurement.record_simulated",
+                      "experiment.draft", "experiment.submit_simulated", "quote.record",
+                      "agent.run"]
+
+
+class ResearchContractIn(Input):
+    agent_id: uuid.UUID
+    purpose: str = Field(min_length=1, max_length=2000)
+    actions: list[AgentAction] = Field(min_length=1, max_length=16)
+    project_ids: list[uuid.UUID] | None = Field(default=None, max_length=50)
+    ttl_days: int = Field(ge=1, le=90)
+
+
+class ResearchContractOut(Output):
+    id: uuid.UUID
+    workspace_id: uuid.UUID
+    agent_id: uuid.UUID
+    granted_by: uuid.UUID
+    purpose: str
+    actions: list[str]
+    project_ids: list[str] | None
+    expires_at: datetime
+    revoked_at: datetime | None
+    created_at: datetime
+
+
+class AuditEventOut(Output):
+    id: uuid.UUID
+    actor_id: uuid.UUID
+    actor_kind: str
+    action: str
+    resource_type: str | None
+    resource_id: str | None
+    decision: Literal["allow", "deny"]
+    reason: str
+    occurred_at: datetime
+
+
+class PolicyDecisionOut(Output):
+    action: str
+    allowed: bool
+    reason: str

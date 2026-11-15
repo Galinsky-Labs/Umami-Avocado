@@ -6,6 +6,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -106,3 +107,42 @@ class Project(TimestampMixin, Base):
     objective: Mapped[str] = mapped_column(Text, default="")
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ResearchContract(TimestampMixin, Base):
+    """Explicit, expiring scope granted by a human to one agent principal (UA-007)."""
+    __tablename__ = "research_contracts"
+    __table_args__ = (Index("ix_contracts_agent", "workspace_id", "agent_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id", ondelete="CASCADE"))
+    granted_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    purpose: Mapped[str] = mapped_column(Text)
+    actions: Mapped[list[str]] = mapped_column(JSON)
+    project_ids: Mapped[list[str] | None] = mapped_column(JSON)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("principals.id"))
+
+
+class AuditEvent(Base):
+    """Append-only record of authorization decisions and state changes.
+
+    A database trigger rejects UPDATE and DELETE (migration 0002)."""
+    __tablename__ = "audit_events"
+    __table_args__ = (
+        Index("ix_audit_workspace_time", "workspace_id", "occurred_at"),
+        CheckConstraint("decision IN ('allow', 'deny')", name="ck_audit_decision"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    actor_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    actor_kind: Mapped[str] = mapped_column(String(16))
+    action: Mapped[str] = mapped_column(String(64))
+    resource_type: Mapped[str | None] = mapped_column(String(64))
+    resource_id: Mapped[str | None] = mapped_column(String(64))
+    decision: Mapped[str] = mapped_column(String(8))
+    reason: Mapped[str] = mapped_column(String(80))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

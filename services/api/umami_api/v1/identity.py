@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
+from umami_api.authz import authorize
 from umami_api.db import utcnow
 from umami_api.errors import ApiError, conflict, forbidden, not_found
 from umami_api.models import ApiToken, Membership, Principal, Workspace
@@ -27,18 +28,11 @@ from umami_api.security import (
     AccessDep,
     CallerDep,
     SessionDep,
-    WorkspaceAccess,
     constant_time_equal,
     issue_token,
 )
 
 router = APIRouter(tags=["identity"])
-MANAGER_ROLES = ("owner", "admin")
-
-
-def require_role(access: WorkspaceAccess, roles: tuple[str, ...]) -> None:
-    if access.role not in roles:
-        raise forbidden()
 
 
 @router.post("/bootstrap", response_model=BootstrapOut, status_code=201,
@@ -117,9 +111,7 @@ def list_members(access: AccessDep):
 @router.post("/workspaces/{workspace_id}/members", response_model=MemberCreated,
              status_code=201, operation_id="create_member")
 def create_member(body: MemberIn, access: AccessDep):
-    require_role(access, MANAGER_ROLES)
-    if access.caller.is_agent:
-        raise forbidden("Agents cannot create principals.")
+    authorize(access, "workspace.manage_members", resource=("workspace", access.workspace.id))
     if (body.kind == "agent") != (body.role == "agent"):
         raise ApiError(400, "invalid_request",
                        "Agent principals must hold exactly the agent role.")
