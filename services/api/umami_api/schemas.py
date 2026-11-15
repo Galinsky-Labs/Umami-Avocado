@@ -565,3 +565,18 @@ class ProposalOut(Output):
     author_kind: str
     created_at: datetime
     updated_at: datetime
+
+
+class AgentTraceOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    provider: str
+    model: str
+    input_sha256: str
+    input: dict
+    output: dict | None
+    outcome: Literal["proposal_created", "rejected", "provider_error"]
+    errors: list[str]
+    proposal_id: uuid.UUID | None
+    requested_by: uuid.UUID
+    created_at: datetime

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   type Claim, type Me, type Milestone, type PolicyDecision, type Program, type Project, type ProjectStatus, type Readiness,
-  type Run, type SimulationDesign, ResearchApi, ResearchApiError, defaultDesign, portfolioStats, programLabels, slugify, validateDesign,
+  type AgentTrace, type Run, type SimulationDesign, ResearchApi, ResearchApiError, defaultDesign, portfolioStats, programLabels, slugify, validateDesign,
 } from "./research-api";
 
 export const researchPrograms = ["Yeast biomass (M1)", "Yeast extract (M2)", "Avocado (A1)"] as const;
@@ -188,6 +188,7 @@ function Simulator({ api, workspaceId }: { api: ResearchApi; workspaceId: string
   const [milestone, setMilestone] = useState<Milestone | null>(null);
   const [design, setDesign] = useState<SimulationDesign>(defaultDesign);
   const [error, setError] = useState<string | null>(null);
+  const [trace, setTrace] = useState<AgentTrace | null>(null);
   useEffect(() => { api.projects(workspaceId).then(list => { setProjects(list); setProjectId(id => id || list[0]?.id || ""); }).catch(e => setError(message(e))); }, [api, workspaceId]);
   const load = useCallback(() => {
     if (!projectId) return;
@@ -205,6 +206,13 @@ function Simulator({ api, workspaceId }: { api: ResearchApi; workspaceId: string
     const problem = validateDesign(design);
     if (problem) { setError(problem); return; }
     try { await api.simulate(workspaceId, projectId, design); setError(null); load(); } catch (err) { setError(message(err)); }
+  };
+  const planNext = async () => {
+    try { setTrace(await api.planNext(workspaceId, projectId)); setError(null); } catch (err) { setError(message(err)); }
+  };
+  const executePlan = async () => {
+    if (!trace?.proposal_id) return;
+    try { await api.executeProposal(workspaceId, projectId, trace.proposal_id); setTrace(null); load(); } catch (err) { setError(message(err)); }
   };
   const field = (key: keyof SimulationDesign, label: string, step = "any") => <label>{label}
     <input type={key === "label" ? "text" : "number"} step={step} value={design[key]}
@@ -225,6 +233,15 @@ function Simulator({ api, workspaceId }: { api: ResearchApi; workspaceId: string
         <button type="submit">Queue simulation</button>
       </form>
       <div className="panel">
+        <h2>Research agent</h2>
+        <p>Asks the configured planning provider for the next SIMULATED experiment from linked evidence and prior runs. Drafts are validated, preflighted and recorded as traces.</p>
+        <button type="button" onClick={planNext}>Plan next experiment</button>
+        {trace && <div className="trace">
+          <p><strong>{trace.outcome.replaceAll("_", " ")}</strong> · {trace.provider}/{trace.model}</p>
+          {trace.output && <p>{trace.output.title}: {trace.output.rationale}</p>}
+          {trace.errors.map(e => <p key={e} className="error">{e}</p>)}
+          {trace.proposal_id && <button type="button" onClick={executePlan}>Run this simulation</button>}
+        </div>}
         <h2>Digital milestone</h2>
         {milestone ? <ul className="checks">{milestone.checks.map(c => <li key={c.key} className={c.met ? "met" : ""}>{c.met ? "✓" : "○"} {c.description}</li>)}</ul> : <p>Unavailable.</p>}
         {milestone && <p>{milestone.achieved ? "Achieved. " : ""}{milestone.note}</p>}

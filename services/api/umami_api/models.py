@@ -454,3 +454,23 @@ class ExperimentProposal(TimestampMixin, Base):
     author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
     author_kind: Mapped[str] = mapped_column(String(16))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AgentTrace(TimestampMixin, Base):
+    """Reviewable record of one planning call: exact input, provider output and the
+    platform's validation outcome (UA-019). Append-only (trigger)."""
+    __tablename__ = "agent_traces"
+    __table_args__ = (Index("ix_agent_traces_project", "project_id", "created_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    provider: Mapped[str] = mapped_column(String(32))
+    model: Mapped[str] = mapped_column(String(64))
+    input_sha256: Mapped[str] = mapped_column(String(64))
+    input: Mapped[dict] = mapped_column(JSON)
+    output: Mapped[dict | None] = mapped_column(JSON)
+    outcome: Mapped[str] = mapped_column(String(32))
+    errors: Mapped[list[str]] = mapped_column(JSON, default=list)
+    proposal_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("experiment_proposals.id"))
+    requested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))

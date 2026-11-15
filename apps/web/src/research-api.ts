@@ -30,6 +30,11 @@ export interface Run {
 }
 export interface Milestone { achieved: boolean; physical_results_exist: boolean; note: string; checks: { key: string; description: string; met: boolean }[] }
 
+export interface AgentTrace {
+  id: string; provider: string; model: string; outcome: "proposal_created" | "rejected" | "provider_error";
+  errors: string[]; proposal_id: string | null; output: { title: string; rationale: string } | null; created_at: string;
+}
+
 export class ResearchApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
@@ -85,6 +90,12 @@ export class ResearchApi {
   }
   milestone(workspace: string, project: string) {
     return this.request<Milestone>("GET", `/api/v1/workspaces/${workspace}/projects/${project}/digital-milestone`);
+  }
+  planNext(workspace: string, project: string) {
+    return this.request<AgentTrace>("POST", `/api/v1/workspaces/${workspace}/projects/${project}/agent/plan`);
+  }
+  executeProposal(workspace: string, project: string, proposal: string) {
+    return this.request<unknown>("POST", `/api/v1/workspaces/${workspace}/projects/${project}/proposals/${proposal}/execute`);
   }
   decisions(workspace: string) { return this.request<PolicyDecision[]>("GET", `/api/v1/workspaces/${workspace}/policy/decisions`); }
 }
