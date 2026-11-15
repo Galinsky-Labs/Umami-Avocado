@@ -267,3 +267,83 @@ class SampleSummaryOut(Output):
     sd: float | None
     n_biological: int
     n_technical: int
+
+
+SourceKind = Literal["doi", "url", "book", "dataset", "internal_measurement", "other"]
+ClaimStatus = Literal["draft", "under_review", "accepted", "rejected", "retracted"]
+Stance = Literal["supports", "contradicts", "context"]
+
+
+class SourceIn(Input):
+    kind: SourceKind
+    identifier: str = Field(min_length=1, max_length=300)
+    citation: str = Field(min_length=1, max_length=4000)
+    url: str | None = Field(default=None, max_length=500, pattern=r"^https?://\S+$")
+
+
+class SourceOut(Output):
+    id: uuid.UUID
+    kind: SourceKind
+    identifier: str
+    citation: str
+    url: str | None
+    added_by: uuid.UUID
+    added_by_kind: str
+    verified_by: uuid.UUID | None
+    verified_at: datetime | None
+    created_at: datetime
+
+
+class ClaimIn(Input):
+    statement: str = Field(min_length=5, max_length=4000)
+    scope_conditions: str = Field(default="", max_length=4000)
+    project_id: uuid.UUID | None = None
+
+
+class EvidenceIn(Input):
+    source_id: uuid.UUID | None = None
+    measurement_id: uuid.UUID | None = None
+    stance: Stance
+    excerpt: str = Field(default="", max_length=4000)
+
+
+class EvidenceOut(Output):
+    id: uuid.UUID
+    source_id: uuid.UUID | None
+    measurement_id: uuid.UUID | None
+    stance: Stance
+    excerpt: str
+    added_by: uuid.UUID
+    created_at: datetime
+
+
+class ReviewIn(Input):
+    decision: Literal["accept", "reject", "request_changes", "retract"]
+    rationale: str = Field(min_length=10, max_length=4000)
+
+
+class ReviewOut(Output):
+    id: uuid.UUID
+    reviewer_id: uuid.UUID
+    decision: str
+    rationale: str
+    from_status: ClaimStatus
+    to_status: ClaimStatus
+    created_at: datetime
+
+
+class ClaimOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID | None
+    statement: str
+    scope_conditions: str
+    status: ClaimStatus
+    author_id: uuid.UUID
+    author_kind: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ClaimDetailOut(ClaimOut):
+    evidence: list[EvidenceOut]
+    reviews: list[ReviewOut]

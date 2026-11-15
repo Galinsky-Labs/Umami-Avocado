@@ -81,7 +81,9 @@
       "id": "UA-005",
       "title": "Measurement ontology, units, assay and replicate semantics",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        6
+      ],
       "dependsOn": [
         "UA-003"
       ],
@@ -511,6 +513,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/5",
       "mergedAt": "2026-11-15T18:39:07Z",
+      "draft": false
+    },
+    {
+      "number": 6,
+      "title": "UA-005: Measurement ontology, units, assay and replicate semantics",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/6",
+      "mergedAt": "2026-11-15T18:42:50Z",
       "draft": false
     }
   ]
