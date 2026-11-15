@@ -15,6 +15,7 @@ from umami_api.v1 import (
     operations,
     projects,
     qc,
+    results,
     simulator,
     spending,
     studio,
@@ -37,3 +38,4 @@ router.include_router(artifacts.router)
 router.include_router(cro.router)
 router.include_router(qc.router)
 router.include_router(operations.router)
+router.include_router(results.router)

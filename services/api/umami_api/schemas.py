@@ -863,3 +863,23 @@ class ExceptionOut(Output):
     project_id: uuid.UUID | None
     ref: str
     at: datetime
+
+
+class SeriesPointOut(Output):
+    time_h: float
+    mean: float
+    sd: float | None
+    n_biological: int
+
+
+class RunSeriesOut(Output):
+    run_id: uuid.UUID
+    label: str
+    origin: Origin
+    unit: str
+    points: list[SeriesPointOut]
+
+
+class RunComparisonOut(Output):
+    run: RunOut
+    normalization: RunNormalizationOut

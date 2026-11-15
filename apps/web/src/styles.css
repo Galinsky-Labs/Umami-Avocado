@@ -40,3 +40,5 @@ button.linkish{background:none;border:0;padding:0;color:#e9f6ed;text-decoration:
 .timeline li.warning{border-left:3px solid #bcb95e}.timeline li.error{border-left:3px solid #bf6a4f}.timeline time{color:var(--muted);font-size:12px}
 .detail{color:var(--muted)}.badge.error{border-color:#bf6a4f}.badge.warning{border-color:#bcb95e}
 .badge.origin-simulated{border-color:#7fa7e0;color:#bcd2f2}.badge.origin-physical{border-color:#4fbf6a;color:#a3eeab}
+.chart{width:100%;height:auto;background:#0b1c13;border-radius:10px}.chart .axis{stroke:#3e694b}.chart .tick{fill:#b5c9bd;font-size:12px}
+.legend{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:12px;font-size:13px}.legend span{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:middle}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResearchApi, ResearchApiError, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
+import { ResearchApi, ResearchApiError, chartPaths, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
 
 function respond(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -72,5 +72,14 @@ describe("operations endpoints", () => {
     await api.exceptions("w");
     await api.timeline("w", "p", "r").catch(() => undefined);
     expect(urls).toEqual(["/api/v1/workspaces/w/exceptions", "/api/v1/workspaces/w/projects/p/runs/r/timeline"]);
+  });
+});
+
+describe("chart geometry", () => {
+  it("scales series into the viewport", () => {
+    const geometry = chartPaths([{ run_id: "r", label: "R", origin: "SIMULATED", unit: "g/L",
+      points: [{ time_h: 0, mean: 0, sd: null, n_biological: 3 }, { time_h: 10, mean: 5, sd: 0, n_biological: 3 }] }], 100, 100, 10);
+    expect(geometry.paths[0]).toBe("10.0,90.0 90.0,10.0");
+    expect(chartPaths([], 100, 100).paths).toEqual([]);
   });
 });

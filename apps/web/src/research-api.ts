@@ -38,6 +38,9 @@ export interface AgentTrace {
 export interface TimelineEvent { at: string; kind: string; title: string; detail: string; severity: "info" | "warning" | "error"; ref: string | null }
 export interface ExceptionItem { kind: string; severity: "warning" | "error"; title: string; detail: string; project_id: string | null; ref: string; at: string }
 
+export interface SeriesPoint { time_h: number; mean: number; sd: number | null; n_biological: number }
+export interface RunSeries { run_id: string; label: string; origin: Origin; unit: string; points: SeriesPoint[] }
+
 export class ResearchApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
@@ -100,6 +103,15 @@ export class ResearchApi {
   executeProposal(workspace: string, project: string, proposal: string) {
     return this.request<unknown>("POST", `/api/v1/workspaces/${workspace}/projects/${project}/proposals/${proposal}/execute`);
   }
+  async download(path: string): Promise<{ blob: Blob; sha256: string | null }> {
+    const headers: Record<string, string> = {};
+    if (this.token) headers.Authorization = `Bearer ${this.token}`;
+    let response: Response;
+    try { response = await this.fetcher(this.base + path, { headers }); }
+    catch { throw new ResearchApiError(0, "transport_error", "The API could not be reached."); }
+    if (!response.ok) throw new ResearchApiError(response.status, "download_failed", "The export could not be downloaded.");
+    return { blob: await response.blob(), sha256: response.headers.get("X-Content-SHA256") };
+  }
   get<T>(path: string) { return this.request<T>("GET", path); }
   post<T>(path: string, body?: unknown) { return this.request<T>("POST", path, body); }
   timeline(workspace: string, project: string, run: string) {
@@ -139,4 +151,15 @@ export function validateDesign(design: SimulationDesign): string | null {
   if (design.initial_glucose_g_l <= 0 || design.initial_glucose_g_l > 150) return "Glucose must be 0–150 g/L.";
   if (design.duration_h <= 0 || design.duration_h > 96) return "Duration must be up to 96 h.";
   return null;
+}
+
+/** Map series onto an SVG viewport; returns polyline point strings per run. */
+export function chartPaths(series: RunSeries[], width: number, height: number, pad = 32) {
+  const points = series.flatMap(s => s.points);
+  if (points.length === 0) return { paths: [] as string[], maxT: 0, maxY: 0 };
+  const maxT = Math.max(...points.map(p => p.time_h)) || 1;
+  const maxY = Math.max(...points.map(p => p.mean + (p.sd ?? 0))) || 1;
+  const x = (t: number) => pad + (t / maxT) * (width - 2 * pad);
+  const y = (v: number) => height - pad - (v / maxY) * (height - 2 * pad);
+  return { paths: series.map(s => s.points.map(p => `${x(p.time_h).toFixed(1)},${y(p.mean).toFixed(1)}`).join(" ")), maxT, maxY };
 }
