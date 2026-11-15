@@ -23,26 +23,33 @@ ACTIONS = frozenset({
     "budget.manage", "quote.record", "spend.reserve", "spend.approve",
     "experiment.draft", "experiment.submit_simulated", "experiment.approve_physical",
     "experiment.submit_physical", "job.manage", "agent.run",
+    "material.register", "material.custody", "material.ship",
+    "adapter.manage", "cro.exchange", "cro.dispatch", "artifact.upload", "qc.review",
 })
+
+# Actions that would move real material, money-bearing orders or data to a laboratory.
+# Denied to everyone while live submission is disabled (it cannot be enabled today).
+PHYSICAL_DISPATCH = frozenset({"experiment.submit_physical", "material.ship", "cro.dispatch"})
 
 READ_ONLY = frozenset({"workspace.read"})
 _SCIENCE = {"project.create", "project.update", "evidence.add", "claim.propose",
             "assay.define", "measurement.record_simulated", "measurement.record_physical",
             "experiment.draft", "experiment.submit_simulated", "quote.record",
-            "spend.reserve", "agent.run"}
+            "spend.reserve", "agent.run", "material.register", "material.custody",
+            "cro.exchange", "artifact.upload"}
 
 ROLE_GRANTS: dict[str, frozenset[str]] = {
     "owner": ACTIONS,
     "admin": ACTIONS - {"spend.approve"},
     "scientist": frozenset(READ_ONLY | _SCIENCE | {"job.manage"}),
     "reviewer": frozenset(READ_ONLY | {"claim.review", "audit.read", "experiment.approve_physical",
-                                       "evidence.add"}),
+                                       "evidence.add", "qc.review"}),
     "viewer": READ_ONLY,
     # Agents may only ever be granted these, and only through a research contract.
     "agent": frozenset(READ_ONLY | {"evidence.add", "claim.propose",
                                     "measurement.record_simulated", "experiment.draft",
                                     "experiment.submit_simulated", "quote.record",
-                                    "agent.run"}),
+                                    "agent.run", "material.register"}),
 }
 
 # Actions that are never available to an agent principal, whatever a contract says.
@@ -50,11 +57,13 @@ AGENT_FORBIDDEN = frozenset({
     "workspace.manage_members", "contract.manage", "claim.review", "budget.manage",
     "spend.reserve", "spend.approve", "experiment.approve_physical", "experiment.submit_physical",
     "measurement.record_physical", "job.manage", "audit.read", "project.create",
-    "project.update", "assay.define",
+    "project.update", "assay.define", "material.custody", "material.ship", "adapter.manage",
+    "cro.exchange", "cro.dispatch", "artifact.upload", "qc.review",
 })
 
 # Approval actions require that the approver did not author the subject.
-SEPARATION_OF_DUTIES = frozenset({"claim.review", "spend.approve", "experiment.approve_physical"})
+SEPARATION_OF_DUTIES = frozenset({"claim.review", "spend.approve", "experiment.approve_physical",
+                                  "qc.review"})
 
 
 @dataclass(frozen=True)
@@ -98,7 +107,7 @@ def decide(context: Context, action: str, subject: Subject | None = None) -> Dec
     is_agent = context.principal_kind == "agent"
     if is_agent != (context.role == "agent"):
         return Decision(False, "kind_role_mismatch")
-    if action == "experiment.submit_physical" and not context.live_submission_enabled:
+    if action in PHYSICAL_DISPATCH and not context.live_submission_enabled:
         return Decision(False, "live_submission_disabled")
     if is_agent and action in AGENT_FORBIDDEN:
         return Decision(False, "agents_cannot_" + action.replace(".", "_"))

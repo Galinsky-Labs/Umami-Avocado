@@ -131,7 +131,7 @@ class ProjectOut(Output):
 
 AgentAction = Literal["evidence.add", "claim.propose", "measurement.record_simulated",
                       "experiment.draft", "experiment.submit_simulated", "quote.record",
-                      "agent.run"]
+                      "agent.run", "material.register"]
 
 
 class ResearchContractIn(Input):
@@ -580,3 +580,70 @@ class AgentTraceOut(Output):
     proposal_id: uuid.UUID | None
     requested_by: uuid.UUID
     created_at: datetime
+
+
+MaterialKind = Literal["strain", "culture", "sample", "extract", "plant_material", "reagent"]
+
+
+class MaterialIn(Input):
+    kind: MaterialKind
+    label: str = Field(min_length=1, max_length=120)
+    organism: str | None = Field(default=None, max_length=120)
+    origin: Origin
+    project_id: uuid.UUID | None = None
+    custodian: str = Field(min_length=1, max_length=120)
+    location: str = Field(default="", max_length=200)
+    attributes: dict = Field(default_factory=dict)
+
+
+class DeriveIn(Input):
+    parent_ids: list[uuid.UUID] = Field(min_length=1, max_length=20)
+    relation: Literal["derived_from", "split_from", "pooled_from", "subcultured_from"]
+    child: MaterialIn
+
+
+class MaterialOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID | None
+    kind: MaterialKind
+    label: str
+    organism: str | None
+    origin: Origin
+    status: Literal["active", "consumed", "disposed"]
+    custodian: str
+    location: str
+    attributes: dict
+    run_id: uuid.UUID | None
+    created_by: uuid.UUID
+    created_at: datetime
+
+
+class LineageEdgeOut(Output):
+    parent_id: uuid.UUID
+    child_id: uuid.UUID
+    relation: str
+
+
+class LineageOut(Output):
+    root: uuid.UUID
+    materials: list[MaterialOut]
+    edges: list[LineageEdgeOut]
+
+
+class CustodyIn(Input):
+    event: Literal["transferred", "received", "stored", "shipped", "consumed", "disposed"]
+    to_party: str | None = Field(default=None, max_length=120)
+    location: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=2000)
+
+
+class CustodyOut(Output):
+    id: uuid.UUID
+    material_id: uuid.UUID
+    event: str
+    from_party: str | None
+    to_party: str | None
+    location: str
+    notes: str
+    recorded_by: uuid.UUID
+    occurred_at: datetime

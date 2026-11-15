@@ -474,3 +474,71 @@ class AgentTrace(TimestampMixin, Base):
     errors: Mapped[list[str]] = mapped_column(JSON, default=list)
     proposal_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("experiment_proposals.id"))
     requested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+MATERIAL_KINDS = ("strain", "culture", "sample", "extract", "plant_material", "reagent")
+MATERIAL_STATUSES = ("active", "consumed", "disposed")
+LINEAGE_RELATIONS = ("derived_from", "split_from", "pooled_from", "subcultured_from")
+CUSTODY_EVENTS = ("registered", "transferred", "received", "stored", "shipped", "consumed",
+                  "disposed")
+
+
+class Material(TimestampMixin, Base):
+    """A biological material or sample (UA-012). Origin is permanent provenance."""
+    __tablename__ = "materials"
+    __table_args__ = (
+        CheckConstraint(_in("kind", MATERIAL_KINDS), name="ck_material_kind"),
+        CheckConstraint(_in("status", MATERIAL_STATUSES), name="ck_material_status"),
+        CheckConstraint(_in("origin", RESULT_ORIGINS), name="ck_material_origin"),
+        UniqueConstraint("workspace_id", "label", name="uq_material_label"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id"))
+    kind: Mapped[str] = mapped_column(String(32))
+    label: Mapped[str] = mapped_column(String(120))
+    organism: Mapped[str | None] = mapped_column(String(120))
+    origin: Mapped[str] = mapped_column(String(16))
+    status: Mapped[str] = mapped_column(String(16), default="active")
+    custodian: Mapped[str] = mapped_column(String(120))
+    location: Mapped[str] = mapped_column(String(200), default="")
+    attributes: Mapped[dict] = mapped_column(JSON, default=dict)
+    run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("experiment_runs.id"))
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class LineageEdge(TimestampMixin, Base):
+    """parent -> child derivation. Append-only; the graph is kept acyclic in code."""
+    __tablename__ = "lineage_edges"
+    __table_args__ = (
+        UniqueConstraint("parent_id", "child_id", name="uq_lineage_edge"),
+        CheckConstraint("parent_id <> child_id", name="ck_lineage_no_self"),
+        CheckConstraint(_in("relation", LINEAGE_RELATIONS), name="ck_lineage_relation"),
+        Index("ix_lineage_child", "child_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    parent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials.id"))
+    child_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials.id"))
+    relation: Mapped[str] = mapped_column(String(32))
+    recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class CustodyEvent(Base):
+    """Append-only chain of custody for a material."""
+    __tablename__ = "custody_events"
+    __table_args__ = (CheckConstraint(_in("event", CUSTODY_EVENTS), name="ck_custody_event"),
+                      Index("ix_custody_material", "material_id", "occurred_at"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    material_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("materials.id"))
+    event: Mapped[str] = mapped_column(String(16))
+    from_party: Mapped[str | None] = mapped_column(String(120))
+    to_party: Mapped[str | None] = mapped_column(String(120))
+    location: Mapped[str] = mapped_column(String(200), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
