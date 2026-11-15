@@ -99,7 +99,9 @@
       "id": "UA-006",
       "title": "Responsive research-console shell and project portfolio",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        8
+      ],
       "dependsOn": [
         "UA-001",
         "UA-003"
@@ -531,6 +533,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/7",
       "mergedAt": "2026-11-15T18:45:40Z",
+      "draft": false
+    },
+    {
+      "number": 8,
+      "title": "UA-006: Responsive research-console shell and project portfolio",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/8",
+      "mergedAt": "2026-11-15T18:48:44Z",
       "draft": false
     }
   ]

@@ -265,3 +265,76 @@ class ClaimReview(TimestampMixin, Base):
     rationale: Mapped[str] = mapped_column(Text)
     from_status: Mapped[str] = mapped_column(String(16))
     to_status: Mapped[str] = mapped_column(String(16))
+
+
+RESERVATION_STATUSES = ("requested", "approved", "rejected", "released", "consumed")
+LEDGER_ACCOUNTS = ("funding", "available", "reserved", "spent")
+
+
+class Budget(TimestampMixin, Base):
+    """Spending cap for one project, in integer US cents (UA-008)."""
+    __tablename__ = "budgets"
+    __table_args__ = (UniqueConstraint("project_id", name="uq_budget_project"),
+                      CheckConstraint("cap_cents >= 0", name="ck_budget_cap"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    cap_cents: Mapped[int]
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    set_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Quote(TimestampMixin, Base):
+    """A vendor quotation as recorded; never an order. Simulated quotes are labelled."""
+    __tablename__ = "quotes"
+    __table_args__ = (CheckConstraint("amount_cents > 0", name="ck_quote_amount"),
+                      CheckConstraint(_in("origin", RESULT_ORIGINS), name="ck_quote_origin"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    vendor: Mapped[str] = mapped_column(String(120))
+    description: Mapped[str] = mapped_column(Text)
+    amount_cents: Mapped[int]
+    currency: Mapped[str] = mapped_column(String(3), default="USD")
+    origin: Mapped[str] = mapped_column(String(16))
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class Reservation(TimestampMixin, Base):
+    __tablename__ = "reservations"
+    __table_args__ = (CheckConstraint("amount_cents > 0", name="ck_reservation_amount"),
+                      CheckConstraint(_in("status", RESERVATION_STATUSES),
+                                      name="ck_reservation_status"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    quote_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("quotes.id"))
+    amount_cents: Mapped[int]
+    purpose: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="requested")
+    requested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    decided_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("principals.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class LedgerEntry(Base):
+    """Append-only double-entry ledger: every posting's entries sum to zero."""
+    __tablename__ = "ledger_entries"
+    __table_args__ = (CheckConstraint(_in("account", LEDGER_ACCOUNTS), name="ck_ledger_account"),
+                      Index("ix_ledger_project", "project_id", "account"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    posting_id: Mapped[uuid.UUID]
+    account: Mapped[str] = mapped_column(String(16))
+    amount_cents: Mapped[int]
+    reservation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("reservations.id"))
+    memo: Mapped[str] = mapped_column(String(200))
+    posted_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
