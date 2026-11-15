@@ -91,10 +91,9 @@
       },
       "ReadinessResponse": {
         "additionalProperties": false,
-        "description": "foundation-only: no database configured; ready: database reachable and migrated;\ndegraded: a database is configured but unreachable. Artifact storage is UA-015.",
+        "description": "foundation-only: no database configured; ready: database reachable and migrated;\ndegraded: a database is configured but unreachable. Artifact storage (UA-015) is\navailable whenever its backing store (PostgreSQL by default) is reachable.",
         "properties": {
           "artifact_store_connected": {
-            "const": false,
             "title": "Artifact Store Connected",
             "type": "boolean"
           },

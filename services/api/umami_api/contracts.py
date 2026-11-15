@@ -36,17 +36,11 @@ class HealthResponse(FoundationResponse):
 
 class ReadinessResponse(FoundationResponse):
     """foundation-only: no database configured; ready: database reachable and migrated;
-    degraded: a database is configured but unreachable. Artifact storage is UA-015."""
+    degraded: a database is configured but unreachable. Artifact storage (UA-015) is
+    available whenever its backing store (PostgreSQL by default) is reachable."""
     status: Literal["foundation-only", "ready", "degraded"]
     database_connected: bool
-    artifact_store_connected: Literal[False]
-
-    @field_validator("artifact_store_connected", mode="before")
-    @classmethod
-    def integrations_are_unavailable(cls, value: object) -> object:
-        if value is not False:
-            raise ValueError("Artifact storage integration is unavailable.")
-        return value
+    artifact_store_connected: bool
 
 
 class ErrorDetail(ContractModel):

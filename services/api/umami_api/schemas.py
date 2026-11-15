@@ -717,3 +717,34 @@ class LabMatchOut(Output):
     capability: dict
     contracted: bool
     has_signed_contract: bool
+
+
+class ArtifactOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    run_id: uuid.UUID | None
+    material_id: uuid.UUID | None
+    name: str
+    media_type: str
+    size: int
+    sha256: str
+    store: str
+    origin: Origin
+    source: str
+    provenance: dict
+    created_by: uuid.UUID
+    created_at: datetime
+
+
+class IngestIn(Input):
+    """Map CSV quantity names to assays in this workspace."""
+    assay_map: dict[str, uuid.UUID] = Field(min_length=1, max_length=20)
+    sample_prefix: str = Field(default="", max_length=60)
+
+
+class IngestionOut(Output):
+    id: uuid.UUID
+    artifact_id: uuid.UUID
+    parser: str
+    measurement_count: int
+    created_at: datetime

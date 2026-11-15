@@ -46,7 +46,7 @@ def test_models_are_frozen_and_readiness_cannot_claim_later_integrations():
     value = {"schema_version": "1.0", "status": "foundation-only",
              "live_lab_orders_enabled": False, "database_connected": False,
              "artifact_store_connected": False}
-    for unsupported in (True, 0, "false"):
+    for unsupported in (0, "false", None):
         with pytest.raises(ValidationError):
             ReadinessResponse.model_validate({**value, "artifact_store_connected": unsupported})
     for unsupported in (0, "false", None):

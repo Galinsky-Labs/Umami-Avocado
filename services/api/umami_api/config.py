@@ -45,6 +45,18 @@ class Settings:
     lab_live_submission_enabled: bool
     max_authorized_spend_cents: int
     embedded_worker: bool = False
+    artifact_store: str = "postgres"
+
+
+def _artifact_store() -> str:
+    """postgres (default) or s3. s3 is used only when fully configured."""
+    choice = os.getenv("ARTIFACT_STORE", "postgres").strip().lower() or "postgres"
+    if choice not in ("postgres", "s3"):
+        raise ConfigurationError("ARTIFACT_STORE must be postgres or s3.")
+    if choice == "s3" and not all(os.getenv(k, "").strip() for k in
+                                  ("S3_ENDPOINT", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY")):
+        return "postgres"
+    return choice
 
 
 def load_settings() -> Settings:
@@ -76,4 +88,5 @@ def load_settings() -> Settings:
         environment=environment, database_url=database_url, migration_database_url=migration_url,
         bootstrap_token=bootstrap, cors_origins=origins, lab_live_submission_enabled=False,
         max_authorized_spend_cents=int(spend) * 100, embedded_worker=_flag("EMBEDDED_WORKER"),
+        artifact_store=_artifact_store(),
     )

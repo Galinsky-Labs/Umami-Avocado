@@ -11,6 +11,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Index,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -582,3 +583,55 @@ class LabContract(TimestampMixin, Base):
     effective_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+ARTIFACT_SOURCES = ("upload", "adapter", "simulator", "cro_exchange", "export")
+
+
+class ArtifactBlob(Base):
+    """Content-addressed bytes (default store). Immutable via trigger."""
+    __tablename__ = "artifact_blobs"
+
+    sha256: Mapped[str] = mapped_column(String(64), primary_key=True)
+    size: Mapped[int]
+    content: Mapped[bytes] = mapped_column(LargeBinary)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Artifact(TimestampMixin, Base):
+    """Immutable laboratory artifact with provenance (UA-015)."""
+    __tablename__ = "artifacts"
+    __table_args__ = (
+        CheckConstraint(_in("origin", RESULT_ORIGINS), name="ck_artifact_origin"),
+        CheckConstraint(_in("source", ARTIFACT_SOURCES), name="ck_artifact_source"),
+        Index("ix_artifacts_project", "project_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    run_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("experiment_runs.id"))
+    material_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("materials.id"))
+    name: Mapped[str] = mapped_column(String(200))
+    media_type: Mapped[str] = mapped_column(String(100))
+    size: Mapped[int]
+    sha256: Mapped[str] = mapped_column(String(64))
+    store: Mapped[str] = mapped_column(String(16))
+    origin: Mapped[str] = mapped_column(String(16))
+    source: Mapped[str] = mapped_column(String(16))
+    provenance: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class ArtifactIngestion(TimestampMixin, Base):
+    """At most one ingestion per artifact; records what it produced."""
+    __tablename__ = "artifact_ingestions"
+    __table_args__ = (UniqueConstraint("artifact_id", name="uq_ingestion_artifact"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    artifact_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("artifacts.id"))
+    parser: Mapped[str] = mapped_column(String(40))
+    assay_map: Mapped[dict] = mapped_column(JSON)
+    measurement_count: Mapped[int]
+    ingested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))

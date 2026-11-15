@@ -43,6 +43,7 @@ def web_response(dist: Path | None, path: str) -> FileResponse | None:
     index = root / "index.html"
     return FileResponse(index) if index.is_file() else None
 MAX_BODY_BYTES = 256 * 1024
+MAX_ARTIFACT_BYTES = 10 * 1024 * 1024
 
 
 def error_response(status: int, headers: dict[str, str] | None = None,
@@ -100,7 +101,8 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
             or "transfer-encoding" in request.headers
         ):
             response = error_response(400)
-        elif not length.isdigit() or int(length) > MAX_BODY_BYTES:
+        elif not length.isdigit() or int(length) > (
+                MAX_ARTIFACT_BYTES if path.endswith("/artifacts") else MAX_BODY_BYTES):
             response = error_response(413 if length.isdigit() else 400)
         else:
             response = await call_next(request)
@@ -165,7 +167,7 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
         status = "foundation-only" if database is None else ("ready" if connected else "degraded")
         return ReadinessResponse(
             schema_version=CONTRACT_VERSION, status=status, live_lab_orders_enabled=False,
-            database_connected=connected, artifact_store_connected=False,
+            database_connected=connected, artifact_store_connected=connected,
         )
 
     application.include_router(v1_router)

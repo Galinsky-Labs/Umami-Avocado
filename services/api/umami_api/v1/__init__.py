@@ -3,6 +3,7 @@ from fastapi import APIRouter
 
 from umami_api.v1 import (
     agents,
+    artifacts,
     evidence,
     governance,
     identity,
@@ -29,3 +30,4 @@ router.include_router(studio.router)
 router.include_router(agents.router)
 router.include_router(materials.router)
 router.include_router(labs.router)
+router.include_router(artifacts.router)
