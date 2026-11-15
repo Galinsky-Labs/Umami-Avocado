@@ -7,6 +7,7 @@ from umami_api.v1 import (
     governance,
     identity,
     jobs,
+    materials,
     measurements,
     projects,
     simulator,
@@ -25,3 +26,4 @@ router.include_router(jobs.router)
 router.include_router(simulator.router)
 router.include_router(studio.router)
 router.include_router(agents.router)
+router.include_router(materials.router)
