@@ -883,3 +883,30 @@ class RunSeriesOut(Output):
 class RunComparisonOut(Output):
     run: RunOut
     normalization: RunNormalizationOut
+
+
+class BoundsIn(Input):
+    temperature_c: tuple[float, float] = (20.0, 40.0)
+    ph: tuple[float, float] = (3.5, 7.0)
+    initial_glucose_g_l: tuple[float, float] = (10.0, 40.0)
+
+
+class OptimizationIn(Input):
+    objective: Literal["final_biomass", "biomass_yield", "final_glutamate"] = "final_biomass"
+    origin: Origin = "SIMULATED"
+    bounds: BoundsIn = Field(default_factory=BoundsIn)
+    batch_size: int = Field(default=3, ge=1, le=6)
+    queue_simulated_runs: bool = False
+    duration_h: float = Field(default=24, gt=0, le=96)
+
+
+class OptimizationOut(Output):
+    id: uuid.UUID
+    objective: str
+    origin: Origin
+    bounds: dict
+    observations: list[dict]
+    suggestions: list[dict]
+    queued_run_ids: list[str]
+    strategy: str
+    created_at: datetime

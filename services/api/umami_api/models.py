@@ -709,3 +709,20 @@ class QcDisposition(TimestampMixin, Base):
     decision: Mapped[str] = mapped_column(String(10))
     rationale: Mapped[str] = mapped_column(Text)
     decided_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class OptimizationRound(TimestampMixin, Base):
+    """Append-only record of one next-experiment selection (UA-020)."""
+    __tablename__ = "optimization_rounds"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    objective: Mapped[str] = mapped_column(String(40))
+    origin: Mapped[str] = mapped_column(String(16))
+    bounds: Mapped[dict] = mapped_column(JSON)
+    observations: Mapped[list[dict]] = mapped_column(JSON)
+    suggestions: Mapped[list[dict]] = mapped_column(JSON)
+    queued_run_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
+    strategy: Mapped[str] = mapped_column(String(40))
+    requested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
