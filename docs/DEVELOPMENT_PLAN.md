@@ -24,3 +24,9 @@ UA-005 [measurements](MEASUREMENTS.md), UA-004 [evidence & claim review](EVIDENC
 **UA-026–UA-030:** provider contract tests, one verified real-lab integration, two validated physical rounds and production operational hardening.
 
 The first external-lab milestone requires genuine experiment results and written approval. **No unit is complete merely because it appears in this plan.**
+
+UA-006 research console: the React console (`apps/web`) signs in with a `ua_` API token
+(or performs the one-time owner bootstrap), switches workspaces, shows the project
+portfolio (create, status changes, per-program counts), claims and the caller's live
+policy decisions. In production the FastAPI service serves the built console at `/`
+with a strict CSP; `/api/*` never falls back to the console.
