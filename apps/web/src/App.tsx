@@ -6,11 +6,12 @@ import {
 import { ExceptionsView, RunsView } from "./views/Operations";
 import { ResultsView } from "./views/Results";
 import { AgentsView } from "./views/Agents";
+import { LabsView } from "./views/Labs";
 
 export const researchPrograms = ["Yeast biomass (M1)", "Yeast extract (M2)", "Avocado (A1)"] as const;
 const TOKEN_KEY = "umami.token";
-type View = "portfolio" | "simulator" | "runs" | "results" | "agents" | "exceptions" | "claims" | "access";
-const viewLabels: Record<View, string> = { portfolio: "Portfolio", simulator: "Simulator", runs: "Runs", results: "Results", agents: "Agents", exceptions: "Exceptions", claims: "Claims", access: "My access" };
+type View = "portfolio" | "simulator" | "runs" | "results" | "agents" | "labs" | "exceptions" | "claims" | "access";
+const viewLabels: Record<View, string> = { portfolio: "Portfolio", simulator: "Simulator", runs: "Runs", results: "Results", agents: "Agents", labs: "Labs", exceptions: "Exceptions", claims: "Claims", access: "My access" };
 
 function readToken(): string | null {
   try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
@@ -71,6 +72,7 @@ export function App() {
       {view === "runs" && <RunsView api={api} workspaceId={workspaceId} />}
       {view === "results" && <ResultsView api={api} workspaceId={workspaceId} />}
       {view === "agents" && <AgentsView api={api} workspaceId={workspaceId} />}
+      {view === "labs" && <LabsView api={api} workspaceId={workspaceId} />}
       {view === "exceptions" && <ExceptionsView api={api} workspaceId={workspaceId} />}
       {view === "claims" && <Claims api={api} workspaceId={workspaceId} />}
       {view === "access" && <Access api={api} workspaceId={workspaceId} />}

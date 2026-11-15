@@ -185,3 +185,9 @@ export const AGENT_ACTIONS = ["evidence.add", "claim.propose", "measurement.reco
 export function contractActive(contract: ResearchContract, now = new Date()): boolean {
   return !contract.revoked_at && new Date(contract.expires_at) > now;
 }
+
+export function formatUsd(cents: number): string {
+  const sign = cents < 0 ? "-" : "";
+  const abs = Math.abs(Math.round(cents));
+  return `${sign}$${Math.floor(abs / 100).toLocaleString("en-US")}.${String(abs % 100).padStart(2, "0")}`;
+}

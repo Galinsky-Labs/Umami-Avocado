@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResearchApi, ResearchApiError, chartPaths, contractActive, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
+import { ResearchApi, ResearchApiError, chartPaths, contractActive, formatUsd, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
 
 function respond(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -91,5 +91,13 @@ describe("research contracts", () => {
     expect(contractActive({ ...base, expires_at: "2026-02-01T00:00:00Z", revoked_at: null }, now)).toBe(true);
     expect(contractActive({ ...base, expires_at: "2025-12-01T00:00:00Z", revoked_at: null }, now)).toBe(false);
     expect(contractActive({ ...base, expires_at: "2026-02-01T00:00:00Z", revoked_at: "2025-12-31T00:00:00Z" }, now)).toBe(false);
+  });
+});
+
+describe("money formatting", () => {
+  it("formats integer cents exactly", () => {
+    expect(formatUsd(0)).toBe("$0.00");
+    expect(formatUsd(123456789)).toBe("$1,234,567.89");
+    expect(formatUsd(-5)).toBe("-$0.05");
   });
 });
