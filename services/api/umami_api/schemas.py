@@ -449,3 +449,45 @@ class OutboxEventOut(Output):
     payload: dict
     created_at: datetime
     published_at: datetime | None
+
+
+class SimulationDesignIn(Input):
+    label: str = Field(min_length=1, max_length=120)
+    temperature_c: float = Field(ge=4, le=45, allow_inf_nan=False)
+    ph: float = Field(ge=3, le=8, allow_inf_nan=False)
+    initial_glucose_g_l: float = Field(gt=0, le=150, allow_inf_nan=False)
+    initial_biomass_g_l: float = Field(default=0.1, gt=0, le=5, allow_inf_nan=False)
+    duration_h: float = Field(default=24, gt=0, le=96, allow_inf_nan=False)
+    sample_interval_h: float = Field(default=2, ge=0.5, le=24, allow_inf_nan=False)
+    biological_replicates: int = Field(default=3, ge=1, le=6)
+    technical_replicates: int = Field(default=1, ge=1, le=3)
+    seed: int = Field(default=1, ge=0, le=2**31 - 1)
+
+
+class RunOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    origin: Origin
+    label: str
+    model_version: str
+    design: dict
+    state: Literal["queued", "running", "completed", "failed", "cancelled"]
+    summary: dict | None
+    job_id: uuid.UUID | None
+    created_by: uuid.UUID
+    created_at: datetime
+    completed_at: datetime | None
+
+
+class MilestoneCheckOut(Output):
+    key: str
+    description: str
+    met: bool
+
+
+class DigitalMilestoneOut(Output):
+    project_id: uuid.UUID
+    achieved: bool
+    checks: list[MilestoneCheckOut]
+    physical_results_exist: bool
+    note: str

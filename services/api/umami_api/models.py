@@ -383,3 +383,31 @@ class OutboxEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     attempts: Mapped[int] = mapped_column(default=0)
+
+
+RUN_STATES = ("queued", "running", "completed", "failed", "cancelled")
+
+
+class ExperimentRun(TimestampMixin, Base):
+    """An experiment execution. In this codebase origin is always SIMULATED (UA-010);
+    physical runs need the supervised adapter path (UA-013/UA-014/UA-027)."""
+    __tablename__ = "experiment_runs"
+    __table_args__ = (
+        CheckConstraint(_in("origin", RESULT_ORIGINS), name="ck_run_origin"),
+        CheckConstraint(_in("state", RUN_STATES), name="ck_run_state"),
+        Index("ix_runs_project", "project_id", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    origin: Mapped[str] = mapped_column(String(16))
+    label: Mapped[str] = mapped_column(String(120))
+    model_version: Mapped[str] = mapped_column(String(40))
+    design: Mapped[dict] = mapped_column(JSON)
+    state: Mapped[str] = mapped_column(String(16), default="queued")
+    summary: Mapped[dict | None] = mapped_column(JSON)
+    job_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("jobs.id"))
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

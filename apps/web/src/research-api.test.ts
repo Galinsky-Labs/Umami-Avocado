@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ResearchApi, ResearchApiError, portfolioStats, slugify, type Project } from "./research-api";
+import { ResearchApi, ResearchApiError, defaultDesign, portfolioStats, slugify, validateDesign, type Project } from "./research-api";
 
 function respond(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -53,5 +53,14 @@ describe("portfolio helpers", () => {
       { ...base, id: "3", program: "A1", status: "active" },
     ];
     expect(portfolioStats(projects)).toEqual({ total: 3, active: 2, byProgram: { M1: 2, M2: 0, A1: 1, OTHER: 0 } });
+  });
+});
+
+describe("simulation design validation", () => {
+  it("accepts the default design and rejects out-of-range inputs", () => {
+    expect(validateDesign(defaultDesign)).toBeNull();
+    expect(validateDesign({ ...defaultDesign, temperature_c: 90 })).toMatch(/Temperature/);
+    expect(validateDesign({ ...defaultDesign, ph: 1 })).toMatch(/pH/);
+    expect(validateDesign({ ...defaultDesign, label: " " })).toMatch(/label/);
   });
 });

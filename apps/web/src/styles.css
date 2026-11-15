@@ -31,3 +31,5 @@ table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;p
 .badge{border-radius:999px;padding:2px 8px;border:1px solid var(--line);font-size:12px}
 .badge.accepted{border-color:#4fbf6a}.badge.rejected,.badge.retracted{border-color:#bf6a4f}
 code{font-size:13px}
+.notice.simulated{border-left-color:#7fa7e0}
+.checks{list-style:none;padding:0;margin:0}.checks li{padding:6px 0;color:var(--muted)}.checks li.met{color:#a3eeab}

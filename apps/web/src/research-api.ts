@@ -18,6 +18,18 @@ export interface PolicyDecision { action: string; allowed: boolean; reason: stri
 export interface Readiness { status: "foundation-only" | "ready" | "degraded"; database_connected: boolean; live_lab_orders_enabled: false }
 export interface Bootstrapped { principal: Principal; workspace: Workspace; issued: { secret: string } }
 
+export interface SimulationDesign {
+  label: string; temperature_c: number; ph: number; initial_glucose_g_l: number;
+  duration_h: number; sample_interval_h: number; biological_replicates: number; technical_replicates: number; seed: number;
+}
+export interface Run {
+  id: string; project_id: string; origin: Origin; label: string; model_version: string; design: Record<string, number>;
+  state: "queued" | "running" | "completed" | "failed" | "cancelled";
+  summary: { biomass_concentration: number; substrate_concentration: number; glutamate_concentration: number; final_time_h: number; samples: number } | null;
+  created_at: string;
+}
+export interface Milestone { achieved: boolean; physical_results_exist: boolean; note: string; checks: { key: string; description: string; met: boolean }[] }
+
 export class ResearchApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
@@ -67,6 +79,13 @@ export class ResearchApi {
     return this.request<Project>("PATCH", `/api/v1/workspaces/${workspace}/projects/${id}`, body);
   }
   claims(workspace: string) { return this.request<Claim[]>("GET", `/api/v1/workspaces/${workspace}/claims`); }
+  runs(workspace: string, project: string) { return this.request<Run[]>("GET", `/api/v1/workspaces/${workspace}/projects/${project}/runs`); }
+  simulate(workspace: string, project: string, design: SimulationDesign) {
+    return this.request<Run>("POST", `/api/v1/workspaces/${workspace}/projects/${project}/simulated-runs`, design);
+  }
+  milestone(workspace: string, project: string) {
+    return this.request<Milestone>("GET", `/api/v1/workspaces/${workspace}/projects/${project}/digital-milestone`);
+  }
   decisions(workspace: string) { return this.request<PolicyDecision[]>("GET", `/api/v1/workspaces/${workspace}/policy/decisions`); }
 }
 
@@ -86,4 +105,18 @@ export function portfolioStats(projects: Project[]) {
     if (project.status === "active") active += 1;
   }
   return { total: projects.length, active, byProgram };
+}
+
+export const defaultDesign: SimulationDesign = {
+  label: "Run 1", temperature_c: 30, ph: 5, initial_glucose_g_l: 20, duration_h: 24,
+  sample_interval_h: 2, biological_replicates: 3, technical_replicates: 1, seed: 1,
+};
+
+export function validateDesign(design: SimulationDesign): string | null {
+  if (!design.label.trim()) return "Give the run a label.";
+  if (design.temperature_c < 4 || design.temperature_c > 45) return "Temperature must be 4–45 °C.";
+  if (design.ph < 3 || design.ph > 8) return "pH must be 3–8.";
+  if (design.initial_glucose_g_l <= 0 || design.initial_glucose_g_l > 150) return "Glucose must be 0–150 g/L.";
+  if (design.duration_h <= 0 || design.duration_h > 96) return "Duration must be up to 96 h.";
+  return null;
 }

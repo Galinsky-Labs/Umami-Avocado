@@ -149,7 +149,9 @@
       "id": "UA-009",
       "title": "Durable experiment orchestration and transactional outbox",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        10
+      ],
       "dependsOn": [
         "UA-003",
         "UA-007",
@@ -551,6 +553,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/9",
       "mergedAt": "2026-11-15T18:52:32Z",
+      "draft": false
+    },
+    {
+      "number": 10,
+      "title": "UA-009: Durable experiment orchestration and transactional outbox",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/10",
+      "mergedAt": "2026-11-15T18:55:47Z",
       "draft": false
     }
   ]

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  type Claim, type Me, type PolicyDecision, type Program, type Project, type ProjectStatus, type Readiness,
-  ResearchApi, ResearchApiError, portfolioStats, programLabels, slugify,
+  type Claim, type Me, type Milestone, type PolicyDecision, type Program, type Project, type ProjectStatus, type Readiness,
+  type Run, type SimulationDesign, ResearchApi, ResearchApiError, defaultDesign, portfolioStats, programLabels, slugify, validateDesign,
 } from "./research-api";
 
 export const researchPrograms = ["Yeast biomass (M1)", "Yeast extract (M2)", "Avocado (A1)"] as const;
 const TOKEN_KEY = "umami.token";
-type View = "portfolio" | "claims" | "access";
+type View = "portfolio" | "simulator" | "claims" | "access";
+const viewLabels: Record<View, string> = { portfolio: "Portfolio", simulator: "Simulator", claims: "Claims", access: "My access" };
 
 function readToken(): string | null {
   try { return localStorage.getItem(TOKEN_KEY); } catch { return null; }
@@ -59,10 +60,11 @@ export function App() {
     {error && <p className="error" role="alert">{error}</p>}
     {!token || !me ? <SignIn api={api} onToken={signIn} readiness={readiness} /> : !workspaceId ? <p>No workspace membership.</p> : <>
       <nav className="tabs" aria-label="Sections">
-        {(["portfolio", "claims", "access"] as View[]).map(v => <button key={v} className={view === v ? "tab active" : "tab"} onClick={() => setView(v)}>
-          {v === "portfolio" ? "Portfolio" : v === "claims" ? "Claims" : "My access"}</button>)}
+        {(Object.keys(viewLabels) as View[]).map(v => <button key={v} className={view === v ? "tab active" : "tab"} onClick={() => setView(v)}>
+          {viewLabels[v]}</button>)}
       </nav>
       {view === "portfolio" && <Portfolio api={api} workspaceId={workspaceId} />}
+      {view === "simulator" && <Simulator api={api} workspaceId={workspaceId} />}
       {view === "claims" && <Claims api={api} workspaceId={workspaceId} />}
       {view === "access" && <Access api={api} workspaceId={workspaceId} />}
     </>}
@@ -176,5 +178,65 @@ function Access({ api, workspaceId }: { api: ResearchApi; workspaceId: string })
     <table><thead><tr><th>Action</th><th>Decision</th><th>Reason</th></tr></thead>
       <tbody>{decisions.map(d => <tr key={d.action}><td><code>{d.action}</code></td><td>{d.allowed ? "allowed" : "denied"}</td><td>{d.reason.replaceAll("_", " ")}</td></tr>)}</tbody>
     </table>
+  </section>;
+}
+
+function Simulator({ api, workspaceId }: { api: ResearchApi; workspaceId: string }) {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [projectId, setProjectId] = useState<string>("");
+  const [runs, setRuns] = useState<Run[]>([]);
+  const [milestone, setMilestone] = useState<Milestone | null>(null);
+  const [design, setDesign] = useState<SimulationDesign>(defaultDesign);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { api.projects(workspaceId).then(list => { setProjects(list); setProjectId(id => id || list[0]?.id || ""); }).catch(e => setError(message(e))); }, [api, workspaceId]);
+  const load = useCallback(() => {
+    if (!projectId) return;
+    api.runs(workspaceId, projectId).then(setRuns).catch(e => setError(message(e)));
+    api.milestone(workspaceId, projectId).then(setMilestone).catch(() => setMilestone(null));
+  }, [api, workspaceId, projectId]);
+  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (!runs.some(r => r.state === "queued" || r.state === "running")) return;
+    const timer = setTimeout(load, 2000);
+    return () => clearTimeout(timer);
+  }, [runs, load]);
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const problem = validateDesign(design);
+    if (problem) { setError(problem); return; }
+    try { await api.simulate(workspaceId, projectId, design); setError(null); load(); } catch (err) { setError(message(err)); }
+  };
+  const field = (key: keyof SimulationDesign, label: string, step = "any") => <label>{label}
+    <input type={key === "label" ? "text" : "number"} step={step} value={design[key]}
+      onChange={e => setDesign({ ...design, [key]: key === "label" ? e.target.value : Number(e.target.value) })} /></label>;
+  if (projects.length === 0) return <section className="panel"><h2>Simulator</h2><p>Create a project first.</p></section>;
+  return <section>
+    <p className="notice simulated">Everything on this page is SIMULATED output of a deterministic Monod batch model — not a laboratory measurement.</p>
+    <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
+      {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+    <div className="panels">
+      <form className="panel" onSubmit={submit}>
+        <h2>New simulated run</h2>
+        {field("label", "Label")}{field("temperature_c", "Temperature (°C)")}{field("ph", "pH")}
+        {field("initial_glucose_g_l", "Initial glucose (g/L)")}{field("duration_h", "Duration (h)")}
+        {field("sample_interval_h", "Sample interval (h)")}{field("biological_replicates", "Biological replicates", "1")}
+        {field("technical_replicates", "Technical replicates", "1")}{field("seed", "Seed", "1")}
+        {error && <p className="error">{error}</p>}
+        <button type="submit">Queue simulation</button>
+      </form>
+      <div className="panel">
+        <h2>Digital milestone</h2>
+        {milestone ? <ul className="checks">{milestone.checks.map(c => <li key={c.key} className={c.met ? "met" : ""}>{c.met ? "✓" : "○"} {c.description}</li>)}</ul> : <p>Unavailable.</p>}
+        {milestone && <p>{milestone.achieved ? "Achieved. " : ""}{milestone.note}</p>}
+      </div>
+    </div>
+    <div className="panel">
+      <h2>Runs</h2>
+      {runs.length === 0 ? <p>No runs yet.</p> : <table>
+        <thead><tr><th>Run</th><th>State</th><th>Final biomass (g/L)</th><th>Residual glucose (g/L)</th><th>Glutamate (g/L)</th></tr></thead>
+        <tbody>{runs.map(r => <tr key={r.id}><td>{r.label} <span className="badge">SIMULATED</span></td><td>{r.state}</td>
+          <td>{r.summary?.biomass_concentration ?? "—"}</td><td>{r.summary?.substrate_concentration ?? "—"}</td><td>{r.summary?.glutamate_concentration ?? "—"}</td></tr>)}</tbody>
+      </table>}
+    </div>
   </section>;
 }
