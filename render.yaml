@@ -31,5 +31,7 @@ services:
         sync: false
       - key: DATABASE_MIGRATION_URL  # Neon direct connection string (migrations at start)
         sync: false
+      - key: ANTHROPIC_API_KEY       # optional: enables the Claude planning provider (else simulated)
+        sync: false
       - key: UMAMI_BOOTSTRAP_TOKEN   # one-time first-owner bootstrap secret (>=32 chars)
         sync: false

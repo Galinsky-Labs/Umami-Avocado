@@ -26,6 +26,16 @@ PYTHONPATH=services/worker uv run --project services/api python -m umami_worker.
 
 PostgreSQL is wired into the API (UA-003, see [docs/DATABASE.md](docs/DATABASE.md)): set `DATABASE_URL`, run `PYTHONPATH=services/api uv run --project services/api python -m umami_api.migrate`, and set `UMAMI_BOOTSTRAP_TOKEN` to create the first owner via `POST /api/v1/bootstrap`. MinIO artifact storage is not yet wired (UA-015). Never use these development credentials outside a local machine.
 
+## What exists today (digital only)
+
+Authenticated, workspace-scoped research API and console: identities and tokens (UA-003),
+policy engine with agent research contracts and audit (UA-007), evidence registry and human
+claim review (UA-004), measurement ontology (UA-005), console (UA-006), spending ledger with a
+default $0 cap (UA-008), durable jobs/outbox (UA-009), deterministic SIMULATED lab simulator and
+digital milestone (UA-010), experiment studio with preflight (UA-011) and evidence-linked
+planning agents with a labelled simulated provider or Claude when `ANTHROPIC_API_KEY` is set
+(UA-019). See `docs/*.md`. No physical laboratory is connected and live submission cannot be enabled.
+
 ## Quality gates
 
 ```sh

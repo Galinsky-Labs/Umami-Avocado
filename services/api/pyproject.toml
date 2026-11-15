@@ -5,7 +5,7 @@ description = "Research-only FastAPI service for Umami Avocado"
 requires-python = ">=3.12,<3.14"
 dependencies = [
     "fastapi>=0.115,<1", "uvicorn>=0.30,<1", "pydantic>=2,<3", "psycopg[binary]>=3.2,<4",
-    "sqlalchemy>=2.0.36,<3", "alembic>=1.14,<2",
+    "sqlalchemy>=2.0.36,<3", "alembic>=1.14,<2", "anthropic>=0.80",
 ]
 
 [dependency-groups]
