@@ -635,3 +635,43 @@ class ArtifactIngestion(TimestampMixin, Base):
     assay_map: Mapped[dict] = mapped_column(JSON)
     measurement_count: Mapped[int]
     ingested_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+WORK_ORDER_STATES = ("draft", "approved", "dispatched", "in_progress", "results_received",
+                     "closed", "cancelled")
+
+
+class WorkOrder(TimestampMixin, Base):
+    """Supervised manual CRO work order (UA-014). Dispatch is a physical action."""
+    __tablename__ = "work_orders"
+    __table_args__ = (CheckConstraint(_in("state", WORK_ORDER_STATES), name="ck_work_order_state"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    laboratory_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("laboratories.id"))
+    proposal_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("experiment_proposals.id"))
+    reservation_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("reservations.id"))
+    title: Mapped[str] = mapped_column(String(160))
+    state: Mapped[str] = mapped_column(String(20), default="draft")
+    package_artifact_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    package_sha256: Mapped[str | None] = mapped_column(String(64))
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    approved_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("principals.id"))
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ExchangeItem(TimestampMixin, Base):
+    """Append-only log of what was exchanged with the CRO, and by whom."""
+    __tablename__ = "exchange_items"
+    __table_args__ = (CheckConstraint("direction IN ('outbound', 'inbound', 'note')",
+                                      name="ck_exchange_direction"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    work_order_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("work_orders.id"))
+    direction: Mapped[str] = mapped_column(String(10))
+    artifact_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("artifacts.id"))
+    note: Mapped[str] = mapped_column(Text, default="")
+    recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))

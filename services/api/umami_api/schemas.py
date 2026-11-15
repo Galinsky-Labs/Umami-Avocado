@@ -748,3 +748,40 @@ class IngestionOut(Output):
     parser: str
     measurement_count: int
     created_at: datetime
+
+
+class WorkOrderIn(Input):
+    laboratory_id: uuid.UUID
+    proposal_id: uuid.UUID
+    title: str = Field(min_length=1, max_length=160)
+    reservation_id: uuid.UUID | None = None
+
+
+class WorkOrderOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    laboratory_id: uuid.UUID
+    proposal_id: uuid.UUID
+    reservation_id: uuid.UUID | None
+    title: str
+    state: str
+    package_artifact_id: uuid.UUID | None
+    package_sha256: str | None
+    author_id: uuid.UUID
+    approved_by: uuid.UUID | None
+    approved_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class ExchangeNoteIn(Input):
+    note: str = Field(min_length=1, max_length=4000)
+
+
+class ExchangeItemOut(Output):
+    id: uuid.UUID
+    direction: str
+    artifact_id: uuid.UUID | None
+    note: str
+    recorded_by: uuid.UUID
+    created_at: datetime
