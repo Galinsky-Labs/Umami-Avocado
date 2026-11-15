@@ -191,7 +191,7 @@ def main():
     arguments = parser.parse_args()
     sys.path.insert(0, str(ROOT / "services/api"))
     from umami_api.main import app
-    outputs = generate_files(app.openapi())
+    outputs = generate_files(app.state.foundation_openapi())
     mismatches = check_or_write(ROOT, outputs, check=arguments.check)
     if mismatches:
         print("API contract drift: " + ", ".join(mismatches), file=sys.stderr)

@@ -48,11 +48,11 @@ replace unsupported features with `any` or silently omit authorization.
 | Method/path | Meaning | Success |
 | --- | --- | --- |
 | GET `/api/health` | Process liveness and public environment label | `HealthResponse` |
-| GET `/api/readiness` | Foundation-only status; DB/artifact integration unavailable | `ReadinessResponse` |
+| GET `/api/readiness` | `foundation-only` (no DB configured), `ready` (DB reachable) or `degraded`; artifact storage unavailable | `ReadinessResponse` |
 
 Both responses require `schema_version: "1.0"` and
-`live_lab_orders_enabled: false`. Readiness additionally requires
-`database_connected: false` and `artifact_store_connected: false`. These flags
+`live_lab_orders_enabled: false`. Readiness reports a strict boolean
+`database_connected` (UA-003) and still requires `artifact_store_connected: false`. These flags
 cannot be activated by environment strings, extra properties, integer zero,
 truthy values or an AI-generated label. Models reject coercion and unknown fields
 and are frozen after validation. The environment is a bounded public deployment
@@ -133,3 +133,13 @@ real laboratory result is used.
 Local validation uses Python 3.12 and Node 22, matching the declared runtime
 ranges. Deployment, physical activity, an installed database/object store and full
 compose CI are separate observations; no such success is inferred from unit tests.
+
+## Authenticated v1 research API (UA-003 onward)
+
+Workspace-scoped routes under `/api/v1` are served in the live OpenAPI document at
+`/api/openapi.json`. They require a bearer token and accept JSON bodies, which the
+strict foundation generator deliberately does not support yet; the generated
+clients and `contracts/openapi.json` therefore cover only the reviewed foundation
+operations (`main.foundation_openapi`). Error envelopes keep the same shape and add
+codes `unauthorized`, `forbidden`, `conflict`, `payload_too_large`, `policy_denied`,
+`limit_exceeded` and `unavailable`, always with server-authored messages.

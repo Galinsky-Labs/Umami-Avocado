@@ -7,9 +7,16 @@
           "code": {
             "enum": [
               "invalid_request",
+              "unauthorized",
+              "forbidden",
               "not_found",
               "method_not_allowed",
-              "internal_error"
+              "conflict",
+              "payload_too_large",
+              "policy_denied",
+              "limit_exceeded",
+              "internal_error",
+              "unavailable"
             ],
             "title": "Code",
             "type": "string"
@@ -84,6 +91,7 @@
       },
       "ReadinessResponse": {
         "additionalProperties": false,
+        "description": "foundation-only: no database configured; ready: database reachable and migrated;\ndegraded: a database is configured but unreachable. Artifact storage is UA-015.",
         "properties": {
           "artifact_store_connected": {
             "const": false,
@@ -91,7 +99,6 @@
             "type": "boolean"
           },
           "database_connected": {
-            "const": false,
             "title": "Database Connected",
             "type": "boolean"
           },
@@ -106,7 +113,11 @@
             "type": "string"
           },
           "status": {
-            "const": "foundation-only",
+            "enum": [
+              "foundation-only",
+              "ready",
+              "degraded"
+            ],
             "title": "Status",
             "type": "string"
           }
@@ -197,7 +208,10 @@
             "x-error-code": "internal_error"
           }
         },
-        "summary": "Health"
+        "summary": "Health",
+        "tags": [
+          "foundation"
+        ]
       }
     },
     "/api/readiness": {
@@ -259,7 +273,10 @@
             "x-error-code": "internal_error"
           }
         },
-        "summary": "Readiness"
+        "summary": "Readiness",
+        "tags": [
+          "foundation"
+        ]
       }
     }
   },

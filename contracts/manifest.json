@@ -2,8 +2,8 @@
   "contractVersion": "1.0",
   "generatorVersion": 1,
   "sha256": {
-    "apps/web/src/generated/api.ts": "0c2705dd79d82f0d5019b1142f322743d47b52c9bc35abb7f15cf03094c5a694",
-    "contracts/openapi.json": "74c19a24be681ff8c1230eb058e07fa5f9d52365247ffc5fe18f22bec3b32302",
-    "services/api/umami_api/generated_client.py": "3709f9315771bafecc2f7596d50186ec9d26397603bb263fabf6eaf8fa5d4587"
+    "apps/web/src/generated/api.ts": "f597a6d1c647e4a328a4c820e7c48db9d0acc551af3f56ae1d716d9b891b2b9a",
+    "contracts/openapi.json": "583126947080bac309660e5e529b73b1f6661736326ccd7c9603d5b3288457c7",
+    "services/api/umami_api/generated_client.py": "8c9c566de9d27733a2ab7a13fc74003c98ccd4c76a907a6d97425459f368bea8"
   }
 }

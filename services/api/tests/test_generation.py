@@ -15,20 +15,20 @@ check_or_write = GENERATOR["check_or_write"]
 
 
 def test_checked_in_openapi_and_both_clients_are_reproducible_and_current():
-    outputs = generate(app.openapi())
+    outputs = generate(app.state.foundation_openapi())
     assert set(outputs) == {
         "contracts/openapi.json", "contracts/manifest.json",
         "apps/web/src/generated/api.ts", "services/api/umami_api/generated_client.py",
     }
     assert check_or_write(ROOT, outputs, check=True) == []
-    assert outputs == generate(copy.deepcopy(app.openapi()))
+    assert outputs == generate(copy.deepcopy(app.state.foundation_openapi()))
     manifest = json.loads(outputs["contracts/manifest.json"])
     for path, digest in manifest["sha256"].items():
         assert hashlib.sha256(outputs[path].encode()).hexdigest() == digest
 
 
 def test_drift_check_fails_without_rewriting_stale_or_missing_artifacts(tmp_path):
-    outputs = generate(app.openapi())
+    outputs = generate(app.state.foundation_openapi())
     assert len(check_or_write(tmp_path, outputs, check=True)) == 4
     check_or_write(tmp_path, outputs, check=False)
     path = tmp_path / "apps/web/src/generated/api.ts"
@@ -52,7 +52,7 @@ def test_drift_check_fails_without_rewriting_stale_or_missing_artifacts(tmp_path
     lambda d: d["paths"]["/api/health"]["get"]["responses"].pop("500"),
 ])
 def test_unsupported_contract_features_fail_generation_instead_of_weakening_types(mutation):
-    document = copy.deepcopy(app.openapi())
+    document = copy.deepcopy(app.state.foundation_openapi())
     mutation(document)
     with pytest.raises(ValueError):
         generate(document)
