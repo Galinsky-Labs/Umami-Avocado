@@ -110,7 +110,9 @@
       "id": "UA-007",
       "title": "Identity, authorization, research contracts and policy engine",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        5
+      ],
       "dependsOn": [
         "UA-003"
       ],
@@ -501,6 +503,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/4",
       "mergedAt": "2026-11-15T18:36:05Z",
+      "draft": false
+    },
+    {
+      "number": 5,
+      "title": "UA-007: Identity, authorization, research contracts and policy engine",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/5",
+      "mergedAt": "2026-11-15T18:39:07Z",
       "draft": false
     }
   ]

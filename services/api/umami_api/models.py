@@ -146,3 +146,52 @@ class AuditEvent(Base):
     decision: Mapped[str] = mapped_column(String(8))
     reason: Mapped[str] = mapped_column(String(80))
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+RESULT_ORIGINS = ("SIMULATED", "PHYSICAL")
+
+
+class Assay(TimestampMixin, Base):
+    """Versioned measurement method bound to one quantity kind and canonical unit (UA-005)."""
+    __tablename__ = "assays"
+    __table_args__ = (UniqueConstraint("workspace_id", "key", "version", name="uq_assay_version"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    key: Mapped[str] = mapped_column(String(64))
+    version: Mapped[int] = mapped_column(default=1)
+    name: Mapped[str] = mapped_column(String(120))
+    quantity_kind: Mapped[str] = mapped_column(String(64))
+    unit: Mapped[str] = mapped_column(String(16))
+    method: Mapped[str] = mapped_column(Text, default="")
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class Measurement(Base):
+    """Immutable observation. ``origin`` is permanent provenance: SIMULATED and PHYSICAL
+    are never converted into one another (a trigger rejects UPDATE/DELETE)."""
+    __tablename__ = "measurements"
+    __table_args__ = (
+        CheckConstraint(_in("origin", RESULT_ORIGINS), name="ck_measurement_origin"),
+        CheckConstraint("biological_replicate >= 1 AND technical_replicate >= 1",
+                        name="ck_measurement_replicates"),
+        Index("ix_measurements_project_assay", "project_id", "assay_id", "origin"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
+    assay_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("assays.id"))
+    origin: Mapped[str] = mapped_column(String(16))
+    sample_label: Mapped[str] = mapped_column(String(120))
+    biological_replicate: Mapped[int]
+    technical_replicate: Mapped[int]
+    value: Mapped[float]
+    unit: Mapped[str] = mapped_column(String(16))
+    value_canonical: Mapped[float]
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    run_id: Mapped[uuid.UUID | None] = mapped_column()
+    provenance: Mapped[str] = mapped_column(Text, default="")
+    supersedes_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("measurements.id"))
+    recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

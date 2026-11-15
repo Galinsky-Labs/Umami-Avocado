@@ -171,3 +171,99 @@ class PolicyDecisionOut(Output):
     action: str
     allowed: bool
     reason: str
+
+
+Origin = Literal["SIMULATED", "PHYSICAL"]
+
+
+class UnitOut(Output):
+    symbol: str
+    name: str
+    dimension: dict[str, int]
+    convertible: bool
+
+
+class QuantityKindOut(Output):
+    key: str
+    label: str
+    canonical_unit: str
+    admissible_units: list[str]
+
+
+class OntologyOut(Output):
+    units: list[UnitOut]
+    quantity_kinds: list[QuantityKindOut]
+    replicate_semantics: str
+
+
+class ConvertIn(Input):
+    value: float = Field(allow_inf_nan=False)
+    from_unit: str = Field(max_length=16)
+    to_unit: str = Field(max_length=16)
+
+
+class ConvertOut(Output):
+    value: float
+    unit: str
+
+
+class AssayIn(Input):
+    key: str = Slug
+    name: str = Name
+    quantity_kind: str = Field(max_length=64)
+    unit: str = Field(max_length=16)
+    method: str = Field(default="", max_length=8000)
+
+
+class AssayOut(Output):
+    id: uuid.UUID
+    key: str
+    version: int
+    name: str
+    quantity_kind: str
+    unit: str
+    method: str
+    created_by: uuid.UUID
+    created_at: datetime
+
+
+class MeasurementIn(Input):
+    assay_id: uuid.UUID
+    origin: Origin
+    sample_label: str = Field(min_length=1, max_length=120)
+    biological_replicate: int = Field(ge=1, le=1000)
+    technical_replicate: int = Field(default=1, ge=1, le=1000)
+    value: float = Field(allow_inf_nan=False)
+    unit: str = Field(max_length=16)
+    observed_at: datetime
+    provenance: str = Field(default="", max_length=4000)
+    supersedes_id: uuid.UUID | None = None
+
+
+class MeasurementOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    assay_id: uuid.UUID
+    origin: Origin
+    sample_label: str
+    biological_replicate: int
+    technical_replicate: int
+    value: float
+    unit: str
+    value_canonical: float
+    observed_at: datetime
+    run_id: uuid.UUID | None
+    provenance: str
+    supersedes_id: uuid.UUID | None
+    recorded_by: uuid.UUID
+    recorded_at: datetime
+
+
+class SampleSummaryOut(Output):
+    sample_label: str
+    origin: Origin
+    unit: str
+    mean: float | None
+    sd: float | None
+    n_biological: int
+    n_technical: int
