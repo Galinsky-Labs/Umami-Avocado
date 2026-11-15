@@ -64,3 +64,13 @@ describe("simulation design validation", () => {
     expect(validateDesign({ ...defaultDesign, label: " " })).toMatch(/label/);
   });
 });
+
+describe("operations endpoints", () => {
+  it("builds timeline and exception URLs", async () => {
+    const urls: string[] = [];
+    const api = new ResearchApi("ua_x", "", async url => { urls.push(String(url)); return respond([]); });
+    await api.exceptions("w");
+    await api.timeline("w", "p", "r").catch(() => undefined);
+    expect(urls).toEqual(["/api/v1/workspaces/w/exceptions", "/api/v1/workspaces/w/projects/p/runs/r/timeline"]);
+  });
+});

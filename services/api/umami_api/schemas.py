@@ -839,3 +839,27 @@ class ReproducibilityOut(Output):
     mean: float | None = None
     cv: float | None
     reproducible: bool | None
+
+
+class TimelineEventOut(Output):
+    at: datetime
+    kind: str
+    title: str
+    detail: str = ""
+    severity: Literal["info", "warning", "error"] = "info"
+    ref: str | None = None
+
+
+class RunTimelineOut(Output):
+    run: RunOut
+    events: list[TimelineEventOut]
+
+
+class ExceptionOut(Output):
+    kind: str
+    severity: Literal["warning", "error"]
+    title: str
+    detail: str
+    project_id: uuid.UUID | None
+    ref: str
+    at: datetime
