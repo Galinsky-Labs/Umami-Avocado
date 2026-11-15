@@ -132,7 +132,9 @@
       "id": "UA-008",
       "title": "Quotes, financial ledger, reservations and spending caps",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        9
+      ],
       "dependsOn": [
         "UA-003",
         "UA-007"
@@ -541,6 +543,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/8",
       "mergedAt": "2026-11-15T18:48:44Z",
+      "draft": false
+    },
+    {
+      "number": 9,
+      "title": "UA-008: Quotes, financial ledger, reservations and spending caps",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/9",
+      "mergedAt": "2026-11-15T18:52:32Z",
       "draft": false
     }
   ]

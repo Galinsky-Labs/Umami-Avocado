@@ -66,12 +66,17 @@ def create_app(settings: Settings | None = None, database: Database | None = Non
 
     @asynccontextmanager
     async def lifespan(application: FastAPI):
-        owned = None
+        owned = stop = None
         if application.state.database is None and settings.database_url:
             owned = application.state.database = Database(settings.database_url)
+        if settings.embedded_worker and application.state.database is not None:
+            from umami_api.worker_loop import start_embedded
+            _thread, stop = start_embedded(application.state.database)
         try:
             yield
         finally:
+            if stop is not None:
+                stop.set()
             if owned is not None:
                 owned.dispose()
 

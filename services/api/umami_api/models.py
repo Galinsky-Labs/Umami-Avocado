@@ -338,3 +338,48 @@ class LedgerEntry(Base):
     memo: Mapped[str] = mapped_column(String(200))
     posted_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
     posted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+JOB_STATES = ("queued", "running", "succeeded", "failed", "dead", "cancelled")
+
+
+class Job(TimestampMixin, Base):
+    """Durable unit of background work with leasing and bounded retries (UA-009)."""
+    __tablename__ = "jobs"
+    __table_args__ = (
+        CheckConstraint(_in("state", JOB_STATES), name="ck_job_state"),
+        UniqueConstraint("workspace_id", "idempotency_key", name="uq_job_idempotency"),
+        Index("ix_jobs_claimable", "state", "run_after"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id"))
+    kind: Mapped[str] = mapped_column(String(64))
+    state: Mapped[str] = mapped_column(String(16), default="queued")
+    payload: Mapped[dict] = mapped_column(JSON)
+    result: Mapped[dict | None] = mapped_column(JSON)
+    attempts: Mapped[int] = mapped_column(default=0)
+    max_attempts: Mapped[int] = mapped_column(default=3)
+    run_after: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    locked_by: Mapped[str | None] = mapped_column(String(80))
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(String(500))
+    idempotency_key: Mapped[str | None] = mapped_column(String(80))
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OutboxEvent(Base):
+    """Transactional outbox: written in the same transaction as the state change it
+    announces, delivered later at-least-once by the dispatcher."""
+    __tablename__ = "outbox_events"
+    __table_args__ = (Index("ix_outbox_pending", "published_at", "created_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    topic: Mapped[str] = mapped_column(String(80))
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    attempts: Mapped[int] = mapped_column(default=0)

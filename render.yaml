@@ -25,6 +25,8 @@ services:
         value: "false"
       - key: LAB_MAX_AUTHORIZED_SPEND_USD
         value: "0"
+      - key: EMBEDDED_WORKER         # run the job/outbox worker inside the API process
+        value: "true"
       - key: DATABASE_URL            # Neon pooled connection string (runtime)
         sync: false
       - key: DATABASE_MIGRATION_URL  # Neon direct connection string (migrations at start)

@@ -44,6 +44,7 @@ class Settings:
     cors_origins: tuple[str, ...]
     lab_live_submission_enabled: bool
     max_authorized_spend_cents: int
+    embedded_worker: bool = False
 
 
 def load_settings() -> Settings:
@@ -74,5 +75,5 @@ def load_settings() -> Settings:
     return Settings(
         environment=environment, database_url=database_url, migration_database_url=migration_url,
         bootstrap_token=bootstrap, cors_origins=origins, lab_live_submission_enabled=False,
-        max_authorized_spend_cents=int(spend) * 100,
+        max_authorized_spend_cents=int(spend) * 100, embedded_worker=_flag("EMBEDDED_WORKER"),
     )
