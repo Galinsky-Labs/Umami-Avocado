@@ -647,3 +647,73 @@ class CustodyOut(Output):
     notes: str
     recorded_by: uuid.UUID
     occurred_at: datetime
+
+
+class CapabilityIn(Input):
+    code: str = Field(min_length=2, max_length=64, pattern=r"^[a-z][a-z0-9_]*$")
+    organisms: list[Organism] = Field(min_length=1, max_length=10)
+    assay_keys: list[str] = Field(default_factory=list, max_length=30)
+    max_volume_l: float = Field(default=1.0, gt=0, le=10000)
+    turnaround_days: int = Field(default=14, ge=0, le=365)
+    unit_price_cents: int = Field(default=0, ge=0, le=100_000_000)
+
+
+class LaboratoryIn(Input):
+    name: str = Field(min_length=1, max_length=120)
+    adapter_key: Literal["simulator", "manual_cro"]
+    capabilities: list[CapabilityIn] = Field(default_factory=list, max_length=50)
+    public_contact: str = Field(default="", max_length=200)
+    notes: str = Field(default="", max_length=4000)
+
+
+class LaboratoryPatch(Input):
+    status: Literal["prospect", "onboarding", "contracted", "suspended"] | None = None
+    capabilities: list[CapabilityIn] | None = Field(default=None, max_length=50)
+    notes: str | None = Field(default=None, max_length=4000)
+
+
+class LaboratoryOut(Output):
+    id: uuid.UUID
+    name: str
+    adapter_key: str
+    status: str
+    capabilities: list[dict]
+    public_contact: str
+    notes: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class LabContractIn(Input):
+    title: str = Field(min_length=1, max_length=160)
+    scope: str = Field(min_length=1, max_length=8000)
+    status: Literal["draft", "signed", "expired", "terminated"] = "draft"
+    max_value_cents: int = Field(default=0, ge=0, le=1_000_000_000)
+    effective_from: datetime | None = None
+    expires_at: datetime | None = None
+
+
+class LabContractOut(Output):
+    id: uuid.UUID
+    laboratory_id: uuid.UUID
+    title: str
+    scope: str
+    status: str
+    max_value_cents: int
+    effective_from: datetime | None
+    expires_at: datetime | None
+    created_at: datetime
+
+
+class AdapterOut(Output):
+    key: str
+    mode: str
+    origin: Origin
+    dispatch_enabled: bool
+
+
+class LabMatchOut(Output):
+    laboratory: LaboratoryOut
+    capability: dict
+    contracted: bool
+    has_signed_contract: bool
