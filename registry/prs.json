@@ -201,7 +201,9 @@
       "id": "UA-012",
       "title": "Biological-material and sample lineage/custody graph",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        15
+      ],
       "dependsOn": [
         "UA-003",
         "UA-005"
@@ -591,6 +593,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/13",
       "mergedAt": "2026-11-15T19:06:15Z",
+      "draft": false
+    },
+    {
+      "number": 15,
+      "title": "UA-012: Biological-material and sample lineage/custody graph",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/15",
+      "mergedAt": "2026-11-15T19:20:59Z",
       "draft": false
     }
   ]

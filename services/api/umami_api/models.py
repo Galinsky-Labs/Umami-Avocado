@@ -542,3 +542,43 @@ class CustodyEvent(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+LAB_STATUSES = ("prospect", "onboarding", "contracted", "suspended")
+CONTRACT_STATUSES = ("draft", "signed", "expired", "terminated")
+
+
+class Laboratory(TimestampMixin, Base):
+    """A laboratory in the workspace's network with its adapter and capabilities (UA-013)."""
+    __tablename__ = "laboratories"
+    __table_args__ = (CheckConstraint(_in("status", LAB_STATUSES), name="ck_lab_status"),
+                      UniqueConstraint("workspace_id", "name", name="uq_lab_name"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(120))
+    adapter_key: Mapped[str] = mapped_column(String(32))
+    status: Mapped[str] = mapped_column(String(16), default="prospect")
+    capabilities: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    public_contact: Mapped[str] = mapped_column(String(200), default="")
+    notes: Mapped[str] = mapped_column(Text, default="")
+    created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class LabContract(TimestampMixin, Base):
+    """Contract metadata only; documents live in artifact storage (UA-015)."""
+    __tablename__ = "lab_contracts"
+    __table_args__ = (CheckConstraint(_in("status", CONTRACT_STATUSES),
+                                      name="ck_lab_contract_status"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    laboratory_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("laboratories.id"))
+    title: Mapped[str] = mapped_column(String(160))
+    scope: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), default="draft")
+    max_value_cents: Mapped[int] = mapped_column(default=0)
+    effective_from: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
