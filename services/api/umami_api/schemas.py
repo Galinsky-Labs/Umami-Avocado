@@ -491,3 +491,77 @@ class DigitalMilestoneOut(Output):
     checks: list[MilestoneCheckOut]
     physical_results_exist: bool
     note: str
+
+
+Organism = Literal["Saccharomyces cerevisiae", "Cyberlindnera jadinii", "Kluyveromyces marxianus"]
+
+
+class ProtocolContent(Input):
+    organism: Organism
+    biosafety_level: Literal[1] = 1
+    medium: str = Field(min_length=1, max_length=500)
+    temperature_c: float = Field(ge=4, le=45, allow_inf_nan=False)
+    ph: float = Field(ge=3, le=8, allow_inf_nan=False)
+    initial_glucose_g_l: float = Field(gt=0, le=150, allow_inf_nan=False)
+    initial_biomass_g_l: float = Field(default=0.1, gt=0, le=5, allow_inf_nan=False)
+    duration_h: float = Field(gt=0, le=96, allow_inf_nan=False)
+    sample_interval_h: float = Field(default=2, ge=0.5, le=24, allow_inf_nan=False)
+    biological_replicates: int = Field(default=3, ge=1, le=6)
+    technical_replicates: int = Field(default=1, ge=1, le=3)
+    assay_keys: list[str] = Field(default_factory=list, max_length=20)
+    steps: list[str] = Field(min_length=1, max_length=50)
+    estimated_cost_cents: int = Field(default=0, ge=0, le=100_000_000)
+
+
+class ProtocolIn(Input):
+    key: str = Slug
+    title: str = Field(min_length=1, max_length=160)
+    content: ProtocolContent
+    change_note: str = Field(default="", max_length=2000)
+
+
+class ProtocolOut(Output):
+    id: uuid.UUID
+    key: str
+    version: int
+    title: str
+    content: dict
+    change_note: str
+    author_id: uuid.UUID
+    created_at: datetime
+
+
+class ProposalIn(Input):
+    protocol_version_id: uuid.UUID
+    title: str = Field(min_length=1, max_length=160)
+    hypothesis: str = Field(min_length=10, max_length=4000)
+    rationale: str = Field(default="", max_length=8000)
+    evidence_claim_ids: list[uuid.UUID] = Field(default_factory=list, max_length=50)
+    evidence_source_ids: list[uuid.UUID] = Field(default_factory=list, max_length=50)
+    target_origin: Origin = "SIMULATED"
+
+
+class PreflightCheckOut(Output):
+    key: str
+    passed: bool
+    severity: Literal["blocker", "warning"]
+    message: str
+
+
+class ProposalOut(Output):
+    id: uuid.UUID
+    project_id: uuid.UUID
+    protocol_version_id: uuid.UUID
+    title: str
+    hypothesis: str
+    rationale: str
+    evidence_claim_ids: list[str]
+    evidence_source_ids: list[str]
+    target_origin: Origin
+    state: Literal["draft", "preflight_failed", "ready", "executing", "executed", "withdrawn"]
+    preflight: dict | None
+    run_id: uuid.UUID | None
+    author_id: uuid.UUID
+    author_kind: str
+    created_at: datetime
+    updated_at: datetime

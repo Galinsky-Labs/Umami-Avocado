@@ -167,7 +167,9 @@
       "id": "UA-010",
       "title": "Deterministic laboratory simulator and digital milestone",
       "origin": "original",
-      "prs": [],
+      "prs": [
+        11
+      ],
       "dependsOn": [
         "UA-009"
       ],
@@ -561,6 +563,14 @@
       "state": "closed",
       "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/10",
       "mergedAt": "2026-11-15T18:55:47Z",
+      "draft": false
+    },
+    {
+      "number": 11,
+      "title": "UA-010: Deterministic laboratory simulator and digital milestone",
+      "state": "closed",
+      "url": "https://github.com/Galinsky-Labs/umami-avocado/pull/11",
+      "mergedAt": "2026-11-15T18:59:10Z",
       "draft": false
     }
   ]

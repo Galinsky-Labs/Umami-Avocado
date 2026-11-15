@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from umami_api.db import utcnow
-from umami_api.models import Assay, ExperimentRun, Measurement
+from umami_api.models import Assay, ExperimentProposal, ExperimentRun, Measurement
 from umami_api.orchestration import JobContext, PermanentJobError, handler
 from umami_api.science.simulator import MODEL_VERSION, Design, simulate, summarize_final
 
@@ -61,5 +61,8 @@ def run_simulation(context: JobContext) -> dict:
             recorded_by=run.created_by))
     run.summary = {**summarize_final(samples), "samples": len(samples), "origin": "SIMULATED"}
     run.state, run.completed_at = "completed", utcnow()
+    for proposal in session.scalars(select(ExperimentProposal).where(
+            ExperimentProposal.run_id == run.id)):
+        proposal.state, proposal.updated_at = "executed", utcnow()
     context.emit("run.completed", {"run_id": str(run.id), "origin": "SIMULATED"})
     return {"run_id": str(run.id), "measurements": len(samples)}
