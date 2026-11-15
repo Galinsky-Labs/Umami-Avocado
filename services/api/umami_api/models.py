@@ -195,3 +195,73 @@ class Measurement(Base):
     supersedes_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("measurements.id"))
     recorded_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
     recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+SOURCE_KINDS = ("doi", "url", "book", "dataset", "internal_measurement", "other")
+CLAIM_STATUSES = ("draft", "under_review", "accepted", "rejected", "retracted")
+STANCES = ("supports", "contradicts", "context")
+REVIEW_DECISIONS = ("accept", "reject", "request_changes", "retract")
+
+
+class EvidenceSource(TimestampMixin, Base):
+    """A citable source. Agent-added sources are flagged until a human verifies them (UA-004)."""
+    __tablename__ = "evidence_sources"
+    __table_args__ = (CheckConstraint(_in("kind", SOURCE_KINDS), name="ck_source_kind"),
+                      UniqueConstraint("workspace_id", "identifier", name="uq_source_identifier"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    kind: Mapped[str] = mapped_column(String(32))
+    identifier: Mapped[str] = mapped_column(String(300))
+    citation: Mapped[str] = mapped_column(Text)
+    url: Mapped[str | None] = mapped_column(String(500))
+    added_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    added_by_kind: Mapped[str] = mapped_column(String(16))
+    verified_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("principals.id"))
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Claim(TimestampMixin, Base):
+    __tablename__ = "claims"
+    __table_args__ = (CheckConstraint(_in("status", CLAIM_STATUSES), name="ck_claim_status"),
+                      Index("ix_claims_workspace_status", "workspace_id", "status"))
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    workspace_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("workspaces.id", ondelete="CASCADE"))
+    project_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("projects.id"))
+    statement: Mapped[str] = mapped_column(Text)
+    scope_conditions: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String(16), default="draft")
+    author_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    author_kind: Mapped[str] = mapped_column(String(16))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ClaimEvidence(TimestampMixin, Base):
+    __tablename__ = "claim_evidence"
+    __table_args__ = (
+        CheckConstraint(_in("stance", STANCES), name="ck_evidence_stance"),
+        CheckConstraint("(source_id IS NULL) <> (measurement_id IS NULL)",
+                        name="ck_evidence_exactly_one_target"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    claim_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("claims.id", ondelete="CASCADE"))
+    source_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("evidence_sources.id"))
+    measurement_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("measurements.id"))
+    stance: Mapped[str] = mapped_column(String(16))
+    excerpt: Mapped[str] = mapped_column(Text, default="")
+    added_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+
+
+class ClaimReview(TimestampMixin, Base):
+    __tablename__ = "claim_reviews"
+    __table_args__ = (CheckConstraint(_in("decision", REVIEW_DECISIONS), name="ck_review_decision"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=new_id)
+    claim_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("claims.id", ondelete="CASCADE"))
+    reviewer_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("principals.id"))
+    decision: Mapped[str] = mapped_column(String(16))
+    rationale: Mapped[str] = mapped_column(Text)
+    from_status: Mapped[str] = mapped_column(String(16))
+    to_status: Mapped[str] = mapped_column(String(16))

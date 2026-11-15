@@ -13,6 +13,10 @@ and readiness boundary. Database persistence, authentication and physical execut
 remain later units; generated contract artifacts are not deployment or scientific
 acceptance. Actual PR/merge observations remain in the canonical registry.
 
+Implemented units and their reference docs (actual merge state is in the registry):
+UA-003 [database & identities](DATABASE.md), UA-007 [authorization](AUTHORIZATION.md),
+UA-005 [measurements](MEASUREMENTS.md), UA-004 [evidence & claim review](EVIDENCE.md).
+
 **UA-011–UA-018:** experiment studio, lineage, adapter framework, supervised lab workflow, immutable artifacts, QC, run/status UI and results explorer.
 
 **UA-019–UA-025:** bounded research agents, next-round optimization, agent/provider/approval UI, yeast research modules and avocado growth tracking.
